@@ -39,7 +39,9 @@ def executeRun():
 
         # Catch any other exceptions
         except Exception as e:
-            print(f"An error occurred: {e}")
+            message = f"An error occurred: {e}"
+            print(message)
+            bot.sendMessage(message)
             last_execution_time = datetime.datetime.now()
             restart_event.set()
             # time.sleep(30)  # Delay of 30 seconds
