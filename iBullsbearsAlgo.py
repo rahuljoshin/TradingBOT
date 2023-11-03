@@ -80,6 +80,6 @@ def start():
     thread1.start()
     thread2.start()
 
-# Wait for the threads to complete (optional)
-thread1.join()
-thread2.join()
+    # Wait for the threads to complete (optional)
+    thread1.join()
+    thread2.join()
