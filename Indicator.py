@@ -11,7 +11,7 @@ import numpy as np
 
 import ta as ta
 
-from Derivatives import NSE
+#from Derivatives import NSE
 
 
 class Indicator:
@@ -28,7 +28,7 @@ class Indicator:
                              '30m': pd.DataFrame(),
                              '1d': pd.DataFrame()}
 
-        self.derNse = NSE()
+        #self.derNse = NSE()
         self.rData = pd.DataFrame()
 
     def execute(self):
