@@ -5,4 +5,4 @@ numpy
 requests
 matplotlib
 ta
-Bharat-sm-data 1.0.0
+
