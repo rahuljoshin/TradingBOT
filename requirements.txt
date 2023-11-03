@@ -1,3 +1,4 @@
+pip
 yfinance
 pandas
 numpy
