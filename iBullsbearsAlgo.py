@@ -75,9 +75,10 @@ def checkExe():
 thread1 = threading.Thread(target=checkExe)
 thread2 = threading.Thread(target=executeRun)
 
-# Start the threads
-thread1.start()
-thread2.start()
+def start():
+    # Start the threads
+    thread1.start()
+    thread2.start()
 
 # Wait for the threads to complete (optional)
 thread1.join()
