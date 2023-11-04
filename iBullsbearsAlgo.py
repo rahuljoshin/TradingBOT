@@ -8,6 +8,9 @@ import time
 from Util import getISTTimeNow
 from TelgramCom import TemBot
 
+import sys
+sys.setrecursionlimit(5000)  # Set the recursion limit to a higher value
+
 
 def executeRun():
     last_execution_time = None  # Store the last execution time
