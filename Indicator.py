@@ -9,6 +9,8 @@ from datetime import datetime, time
 from datetime import timedelta
 import numpy as np
 
+from Util import getISTTimeNow
+
 import ta as ta
 
 #from Derivatives import NSE
@@ -38,7 +40,7 @@ class Indicator:
             tmp_result = self.buyorSell()
             last_result = self.rData.iloc[-1]['result'] if len(self.rData) else ''
             if tmp_result != last_result:
-                new_row = {'result': tmp_result, 'time': datetime.now()}
+                new_row = {'result': tmp_result, 'time': getISTTimeNow()}
 
                 # Create a new DataFrame with the new row
                 new_df = pd.DataFrame(new_row, index=[0])
@@ -191,7 +193,7 @@ class Indicator:
         if len(data):
             if self.isWorkingHours():
                 index = data.index[-1]
-                current_time = datetime.now()
+                current_time = getISTTimeNow()
                 date_format = '%Y-%m-%d %H:%M:%S'
                 datetime_object = datetime.strptime(index, date_format)
 
@@ -222,14 +224,14 @@ class Indicator:
     def isWorkingHours(self):
         stat = False
 
-        weekday = datetime.now().isoweekday()
+        weekday = getISTTimeNow().isoweekday()
 
         # Define the time range
         start_time = time(9, 15, 0)  # 9:15 AM
         end_time = time(15, 30, 0)  # 3:30 PM
 
         # Get the current time
-        current_time = datetime.now().time()
+        current_time = getISTTimeNow().time()
 
         # Check if the current time is within the time range
         if start_time <= current_time <= end_time and weekday < 6:

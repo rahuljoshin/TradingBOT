@@ -3,7 +3,7 @@ from iBullsbearsAlgo import start
 app = Flask(__name__)
 
 @app.route('/')
-def startiBuulsBearsBot():
+def startiBullsBearsBot():
     start()
 
 if __name__ == '__main__':

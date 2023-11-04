@@ -4,8 +4,8 @@ stop_event = threading.Event()
 restart_event = threading.Event()
 
 from Indicator import Indicator
-import datetime
 import time
+from Util import getISTTimeNow
 from TelgramCom import TemBot
 
 
@@ -16,7 +16,7 @@ def executeRun():
     while not stop_event.is_set():
 
         try:
-            current_time = datetime.datetime.now()
+            current_time = getISTTimeNow()
 
             if restart_event.is_set():
                 ind = Indicator()
@@ -30,7 +30,7 @@ def executeRun():
                 ind.execute()
 
                 # Update the last execution time
-                last_execution_time = datetime.datetime.now()
+                last_execution_time = getISTTimeNow()
                 print('Last Execution time', current_time)
 
             # Adding a delay to prevent the loop from consuming too much CPU
@@ -42,7 +42,7 @@ def executeRun():
             message = f"An error occurred: {e}"
             print(message)
             bot.sendMessage(message)
-            last_execution_time = datetime.datetime.now()
+            last_execution_time = getISTTimeNow()
             restart_event.set()
             # time.sleep(30)  # Delay of 30 seconds
             continue
@@ -75,6 +75,7 @@ def checkExe():
 thread1 = threading.Thread(target=checkExe)
 thread2 = threading.Thread(target=executeRun)
 
+
 def start():
     # Start the threads
     thread1.start()
@@ -83,3 +84,7 @@ def start():
     # Wait for the threads to complete (optional)
     thread1.join()
     thread2.join()
+
+
+#Entry fucntion
+start()
