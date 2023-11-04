@@ -39,7 +39,7 @@ def executeRun():
 
             # Adding a delay to prevent the loop from consuming too much CPU
             # Adjust the sleep time based on your requirements
-            time.sleep(30)  # Delay of 30 seconds
+            time.sleep(60)  # Delay of 60 seconds
 
         # Catch any other exceptions
         except Exception as e:
@@ -49,7 +49,7 @@ def executeRun():
             last_execution_time = getISTTimeNow()
 
             restart_event.set()
-            time.sleep(300)  # Delay of 30 seconds
+            time.sleep(300)  # Delay of 300 seconds
             continue
 
     print("Executing the task END...")
