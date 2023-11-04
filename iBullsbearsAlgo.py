@@ -63,8 +63,6 @@ def checkExe():
             if response == 'restart' or response == 'r':
                 restart_event.set()
 
-            if response == 'resume':
-
             # user_input = input("Press 'x' to stop the loop: ")
             if response == 'x' or response == 'stop':
                 stop_event.set()
