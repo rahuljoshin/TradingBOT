@@ -21,6 +21,7 @@ def executeRun():
             if restart_event.is_set():
                 ind = Indicator()
                 restart_event.clear()
+                print(f"Restarted at {current_time}")
                 bot.sendMessage(f"{'Restarted at'} {current_time}")
 
             if last_execution_time is None or (current_time - last_execution_time).seconds > 60:
@@ -43,8 +44,9 @@ def executeRun():
             print(message)
             bot.sendMessage(message)
             last_execution_time = getISTTimeNow()
+
             restart_event.set()
-            # time.sleep(30)  # Delay of 30 seconds
+            time.sleep(300)  # Delay of 30 seconds
             continue
 
     print("Executing the task END...")
@@ -60,6 +62,9 @@ def checkExe():
 
             if response == 'restart' or response == 'r':
                 restart_event.set()
+
+            if response == 'resume':
+
             # user_input = input("Press 'x' to stop the loop: ")
             if response == 'x' or response == 'stop':
                 stop_event.set()
