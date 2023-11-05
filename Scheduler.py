@@ -12,7 +12,7 @@ def job():
      executeRun()
 
 # Schedule the job to run every 30 seconds
-schedule.every(60).seconds.do(job)
+schedule.every(50).seconds.do(job)
 
 # Add any other scheduled jobs here
 
