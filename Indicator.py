@@ -19,6 +19,9 @@ import ta as ta
 class Indicator:
 
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         # [1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo]
         self.TCPR = self.pivot = self.BCPR = self.s1 = self.s2 = self.s3 = self.r1 = self.r2 = self.r3 = 0.0
 
@@ -30,8 +33,9 @@ class Indicator:
                              '30m': pd.DataFrame(),
                              '1d': pd.DataFrame()}
 
-        #self.derNse = NSE()
+        # self.derNse = NSE()
         self.rData = pd.DataFrame()
+
 
     def execute(self):
         self.calculatePivotLevels()
