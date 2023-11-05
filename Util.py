@@ -5,10 +5,14 @@ import pytz
 
 
 def getISTTimeNow():
-    # Get the current time in the UTC timezone
-    utc_now = datetime.now(pytz.utc)
+    # Set the timezone to Indian Standard Time
+    ist = pytz.timezone('Asia/Kolkata')
 
-    # Convert the current time to the Indian Standard Time (IST) timezone
-    ist_now = utc_now.astimezone(pytz.timezone('Asia/Kolkata'))
+    # Get the current time in IST
+    ist_time = datetime.now(ist)
 
-    return ist_now
+    date_string = ist_time.strftime("%Y-%m-%d %H:%M:%S")
+    # Convert string to datetime object
+    datetime_objectNow = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+
+    return datetime_objectNow

@@ -198,7 +198,9 @@ class Indicator:
             if self.isWorkingHours():
                 index = data.index[-1]
                 current_time = getISTTimeNow()
+
                 date_format = '%Y-%m-%d %H:%M:%S'
+
                 datetime_object = datetime.strptime(index, date_format)
 
                 diff = current_time - datetime_object
