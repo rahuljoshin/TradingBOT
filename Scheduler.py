@@ -12,11 +12,11 @@ def job():
      executeRun()
 
 # Schedule the job to run every 30 seconds
-schedule.every(30).seconds.do(job)
+schedule.every(60).seconds.do(job)
 
 # Add any other scheduled jobs here
 
 # Keep the program running to continue the scheduled jobs
 while not ibb.terminate_event.is_set():
     schedule.run_pending()
-    time.sleep(30)
+    time.sleep(60)
