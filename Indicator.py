@@ -8,12 +8,14 @@ from datetime import date
 from datetime import datetime, time
 from datetime import timedelta
 import numpy as np
+import heapq
 
 from Util import getISTTimeNow
 
 import ta as ta
 
-#from Derivatives import NSE
+
+# from Derivatives import NSE
 
 
 class Indicator:
@@ -36,7 +38,6 @@ class Indicator:
         # self.derNse = NSE()
         self.rData = pd.DataFrame()
 
-
     def execute(self):
         self.calculatePivotLevels()
         if self.allSignals():
@@ -51,6 +52,7 @@ class Indicator:
 
                 # Concatenate the new DataFrame with the original DataFrame
                 self.rData = pd.concat([self.rData, new_df], ignore_index=True)
+                self.rData.to_csv('Signal.csv', header=True, index=True)
 
         message = f"{'Result'} {len(self.rData)} {'is:'} {self.rData.iloc[-1]['result']} {'from'} {self.rData.iloc[-1]['time']}"
         bot = TemBot()
@@ -100,6 +102,11 @@ class Indicator:
                             data5.iloc[-2]['SMA5'] < data5.iloc[-2]['SMA20']) and (
                             data5.iloc[-2]['Close'] < data5.iloc[-2]['VWAP']))
 
+        goldenBar = data5.iloc[-2]['GOLDBAR']
+        vwapBar = data5.iloc[-2]['VWAPBAR']
+        prevwapbar = data5.iloc[-2]['PVWAPBAR']
+
+
         if buy30min and buy5min:
             result = 'BESTBUY'
         elif sell30min and sell5min:
@@ -109,9 +116,16 @@ class Indicator:
         elif weakBuy30min and buy5min:
             result = 'QUICKBUY'
 
+        if goldenBar:
+            result = f"{result} {'***5MIN-GOLDBAR***'}"
+        if vwapBar:
+            result = f"{result} {'***5MIN-VWAPBAR***'}"
+        if prevwapbar:
+            result = f"{result} {'***5MIN-PRE-VWAPBAR***'}"
+
         return result
 
-    def fixed_range_volume_profile(self, prices, volumes, num_levels):
+    def fixed_range_volume_profile(self, prices, volumes, num_levels=10):
         price_levels = np.linspace(min(prices), max(prices), num_levels)
         volume_profile = np.zeros(num_levels)
 
@@ -123,6 +137,25 @@ class Indicator:
 
         return price_levels, volume_profile
 
+    def getTopPriceVolumesforDay(self):
+        time5 = '5m'
+        data5 = self.signal_datas[time5]
+        if len(data5) == 0:
+            data5 = self.getSignals()
+
+        #data5.to_csv('signal5.csv', header=True, index=True)
+
+        price_data, volume_data = self.fixed_range_volume_profile(prices=data5['Close'], volumes=data5['Volume'],
+                                                                  num_levels=10)
+
+        # Create a list of tuples containing price and volume data
+        data = list(zip(price_data, volume_data))
+
+        # Get the top 3 records based on the volume data in cloumn 1
+        top_3_records = heapq.nlargest(3, data, key=lambda x: x[1])
+        # print(f"Price: {top_3_records[0][0]}, Volume: {top_3_records[0][1]}")
+        return top_3_records
+
     def calculatePivotLevels(self):
 
         if self.TCPR == 0:
@@ -131,6 +164,8 @@ class Indicator:
             data = bank.get_Candle(period='2d', interval='1d', latest=False)
             self.TCPR, self.pivot, self.BCPR, self.s1, self.s2, self.s3, self.r1, self.r2, self.r3 = (
                 self.fibonacci_pivot_points(data.loc[1, 'High'], data.loc[1, 'Low'], data.loc[1, 'Close']))
+
+            print('TCPR:', self.TCPR, 'PIVOT:', self.pivot, 'BCPR:', self.BCPR, 'S1:', self.s1, 'S2:', self.s2, 'S3:', self.s3, 'R1:', self.r1, 'R2:', self.r2, 'R3:', self.r3)
             print("Calculating pivot done")
 
     def findIRB(self, open, high, low, close):
@@ -151,7 +186,7 @@ class Indicator:
         # RangeVerification
         data['rv'] = data['b'] < c * data['a']
 
-        # PriceLevelfor Retracement
+        # PriceLevel for Retracement
         data['x'] = data['Low'] + c * data['a']
         data['yy'] = data['High'] - c * data['a']
 
@@ -304,10 +339,10 @@ class Indicator:
                                                                                                      bndata['High'],
                                                                                                      bndata['Low'])
 
-        bndata = bndata.round(2)
-
         bndata['IRBLONG'], bndata['IRBSHORT'] = self.findIRB(bndata['Open'], bndata['High'], bndata['Low'],
                                                              bndata['Close'])
+
+        self.findGoldVWAPBuySell(bndata)
 
         # bndata = bndata.fillna(-1)
 
@@ -321,7 +356,33 @@ class Indicator:
                            bndata['SMA5'] < bndata['SMA50']) & (bndata['SMA5'] < bndata['SMA20']) &
                    (bndata['Close'] < bndata['SMA50']), 'BUYORSELL'] = 'SELL'
 
+        bndata = bndata.round(2)
         return bndata
+
+    def findGoldVWAPBuySell(self, bndata):
+
+        bndata['GOLDBAR'] = (((bndata['High'] < bndata['GOLDUP']) &
+                              (bndata['High'] > bndata['GOLDLOW'])) |
+
+                             ((bndata['Low'] < bndata['GOLDUP']) &
+                              (bndata['Low'] > bndata['GOLDLOW'])) |
+
+                             ((bndata['Close'] < bndata['GOLDUP']) &
+                              (bndata['Close'] > bndata['GOLDLOW'])) &
+                             (bndata['IRBLONG'] |bndata['IRBSHORT'])
+
+                             )
+
+        bndata['VWAPBAR'] = ((bndata['High'] > bndata['VWAP']) & (bndata['Low'] < bndata['VWAP'])
+                             &
+                             (bndata['IRBLONG'] | bndata['IRBSHORT'])
+                             )
+
+        bndata['PVWAPBAR'] = ((bndata['High'] > ((2 * bndata['GOLD']) - bndata['VWAP'])) & (
+                bndata['Low'] < ((2 * bndata['GOLD']) - bndata['VWAP']))
+                              &
+                              (bndata['IRBLONG'] | bndata['IRBSHORT'])
+                              )
 
     # Function to calculate VWMA
     def vwma(self, rsi9, volume, period=21):

@@ -216,7 +216,29 @@ plt.title('Simple Moving Average (SMA) with Angle ' + str(angle) + ' degrees')
 plt.legend()
 plt.show()
 '''
-
+from Banknifty import BankniftyCls
 from Indicator import Indicator
 algo = Indicator()
-algo.allSignals()
+records = algo.getTopPriceVolumesforDay()
+
+bank = BankniftyCls()
+data = bank.get_BNData()
+d= pd.DataFrame()
+price_data, volume_data = algo.fixed_range_volume_profile(prices=data['Close'], volumes=data['Volume'], num_levels=10)
+
+import heapq
+
+
+# Create a list of tuples containing price and volume data
+data = list(zip(price_data, volume_data))
+
+# Get the top 3 records based on the volume data in cloumn 1
+top_3_records = heapq.nlargest(3, data, key=lambda x: x[1])
+
+# Print the top 3 records
+print("The top 3 records based on the volume profile are:")
+for record in top_3_records:
+    print(f"Price: {record[0]}, Volume: {record[1]}")
+
+print(d)
+#algo.allSignals()
