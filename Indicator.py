@@ -9,6 +9,9 @@ from datetime import datetime, time
 from datetime import timedelta
 import numpy as np
 import heapq
+from collections import namedtuple
+
+from Util import logger
 
 from Util import getISTTimeNow
 
@@ -19,6 +22,7 @@ import ta as ta
 
 
 class Indicator:
+    Signal = namedtuple('Signal', ['data', 'is_dirty'])
 
     def __init__(self):
         self.reset()
@@ -29,11 +33,19 @@ class Indicator:
 
         self.signalData = pd.DataFrame()
 
-        self.signal_datas = {'1m': pd.DataFrame(),
+        self.newSignalData = {
+            '1m': self.Signal(data=pd.DataFrame(), is_dirty=False),
+            '5m': self.Signal(data=pd.DataFrame(), is_dirty=False),
+            '15m': self.Signal(data=pd.DataFrame(), is_dirty=False),
+            '30m': self.Signal(data=pd.DataFrame(), is_dirty=False),
+            '1d': self.Signal(data=pd.DataFrame(), is_dirty=False)
+        }
+
+        '''self.signal_datas = {'1m': pd.DataFrame(),
                              '5m': pd.DataFrame(),
                              '15m': pd.DataFrame(),
                              '30m': pd.DataFrame(),
-                             '1d': pd.DataFrame()}
+                             '1d': pd.DataFrame()}'''
 
         # self.derNse = NSE()
         self.rData = pd.DataFrame()
@@ -52,22 +64,54 @@ class Indicator:
 
                 # Concatenate the new DataFrame with the original DataFrame
                 self.rData = pd.concat([self.rData, new_df], ignore_index=True)
-                self.rData.to_csv('Signal.csv', header=True, index=True)
 
         message = f"{'Result'} {len(self.rData)} {'is:'} {self.rData.iloc[-1]['result']} {'from'} {self.rData.iloc[-1]['time']}"
         bot = TemBot()
         bot.sendMessage(message)
 
-        print(message)
+        self.saveCSVs()
+
+        logger.info(message)
+        #print(message)
+
+    def saveCSVs(self):
+        try:
+            #print('Signal CSV save started')
+            logger.info('Signal CSV save started')
+            self.rData.to_csv('0sign.csv', header=True, index=True)
+            #print('Signal CSV save end')
+            logger.info('Signal CSV save end')
+
+            for key, value in self.newSignalData.items():
+                if value.is_dirty:
+                    logger.info(f"{'Saving CSV'} {str(key)} {'started'}")
+                    #print('Saving CSV', str(key), 'started')
+                    data = value.data
+                    self.newSignalData[key] = self.newSignalData[key]._replace(is_dirty=False)
+                    #self.newSignalData[key].is_dirty = False
+
+                    data.to_csv(f'{str(key)}.csv', header=True, index=True)
+
+                    logger.info(f"{'Saving CSV'} {str(key)} {'end'}")
+
+        except Exception as e:
+            logger.error("Error in CSV dump")
+
+    def forceRecal(self, time='5m'):
+        self.newSignalData[time] = self.newSignalData[time]._replace(is_dirty=True)
+
 
     def buyorSell(self):
         result = 'WAIT'
         # Logic for deciding buy or sell
         time30 = '30m'
-        data30 = self.signal_datas[time30]
+        # data30 = self.signal_datas[time30]
+        data30 = self.newSignalData[time30].data
         data30 = data30.reset_index()
         time5 = '5m'
-        data5 = self.signal_datas[time5]
+        # data5 = self.signal_datas[time5]
+        data5 = self.newSignalData[time5].data
+
         data5 = data5.reset_index()
 
         buy30min = (((data30.iloc[-2]['Close'] > data30.iloc[-2]['EMA18']) or (
@@ -106,7 +150,6 @@ class Indicator:
         vwapBar = data5.iloc[-2]['VWAPBAR']
         prevwapbar = data5.iloc[-2]['PVWAPBAR']
 
-
         if buy30min and buy5min:
             result = 'BESTBUY'
         elif sell30min and sell5min:
@@ -139,11 +182,12 @@ class Indicator:
 
     def getTopPriceVolumesforDay(self):
         time5 = '5m'
-        data5 = self.signal_datas[time5]
+        # data5 = self.signal_datas[time5]
+        data5 = self.newSignalData[time5].data
         if len(data5) == 0:
             data5 = self.getSignals()
 
-        #data5.to_csv('signal5.csv', header=True, index=True)
+        # data5.to_csv('signal5.csv', header=True, index=True)
 
         price_data, volume_data = self.fixed_range_volume_profile(prices=data5['Close'], volumes=data5['Volume'],
                                                                   num_levels=10)
@@ -153,20 +197,25 @@ class Indicator:
 
         # Get the top 3 records based on the volume data in cloumn 1
         top_3_records = heapq.nlargest(3, data, key=lambda x: x[1])
-        # print(f"Price: {top_3_records[0][0]}, Volume: {top_3_records[0][1]}")
+        # logger.info(f"Price: {top_3_records[0][0]}, Volume: {top_3_records[0][1]}")
         return top_3_records
 
     def calculatePivotLevels(self):
 
         if self.TCPR == 0:
-            print("Calculating pivot level")
+            logger.info("Calculating pivot level")
             bank = BankniftyCls()
             data = bank.get_Candle(period='2d', interval='1d', latest=False)
             self.TCPR, self.pivot, self.BCPR, self.s1, self.s2, self.s3, self.r1, self.r2, self.r3 = (
                 self.fibonacci_pivot_points(data.loc[1, 'High'], data.loc[1, 'Low'], data.loc[1, 'Close']))
 
-            print('TCPR:', self.TCPR, 'PIVOT:', self.pivot, 'BCPR:', self.BCPR, 'S1:', self.s1, 'S2:', self.s2, 'S3:', self.s3, 'R1:', self.r1, 'R2:', self.r2, 'R3:', self.r3)
-            print("Calculating pivot done")
+            my_tuple = ('TCPR:', self.TCPR, 'PIVOT:', self.pivot, 'BCPR:', self.BCPR, 'S1:', self.s1, 'S2:', self.s2, 'S3:',
+                  self.s3, 'R1:', self.r1, 'R2:', self.r2, 'R3:', self.r3)
+
+            string_tuple = ' '.join([str(item) for item in my_tuple])
+            logger.info(string_tuple)
+
+            logger.info("Calculating pivot done")
 
     def findIRB(self, open, high, low, close):
         data = pd.DataFrame()
@@ -215,21 +264,27 @@ class Indicator:
     def allSignals(self):
         # count=1
         stat = False
-        for key, value in self.signal_datas.items():
+        for key, value in self.newSignalData.items():
             if self.isRecalculate(str(key)):
-                print('Find signals for', str(key), 'started')
+                logger.info(f"{'Find signals for'}{str(key)} {'started'}")
                 data = self.getSignals(interval=str(key))
-                self.signal_datas[str(key)] = data
+                #self.newSignalData[key].data = data
+                self.newSignalData[key] = self.newSignalData[key]._replace(data=data)
+                self.newSignalData[key] = self.newSignalData[key]._replace(is_dirty=True)
+                #self.newSignalData[key].is_dirty = True
                 stat = True
-                data.to_csv(f'{str(key)}.csv', header=True, index=True)
-                print('Find signals for', str(key), 'completed')
+                # data.to_csv(f'{str(key)}.csv', header=True, index=True)
+                logger.info(f"{'Find signals for'}{str(key)} {'end'}")
 
         return stat
 
     def isRecalculate(self, time):
         stat = False
-        data = self.signal_datas[time]
+        # data = self.signal_datas[time]
+        data = self.newSignalData[time].data
         if len(data):
+            if self.newSignalData[time].is_dirty:
+                stat = True
             if self.isWorkingHours():
                 index = data.index[-1]
                 current_time = getISTTimeNow()
@@ -243,6 +298,7 @@ class Indicator:
                 threshold_time_difference = timedelta()
                 if time == '1m':
                     threshold_time_difference = timedelta(minutes=1)
+
                 elif time == '5m':
                     threshold_time_difference = timedelta(minutes=5)
                 elif time == '15m':
@@ -369,7 +425,7 @@ class Indicator:
 
                              ((bndata['Close'] < bndata['GOLDUP']) &
                               (bndata['Close'] > bndata['GOLDLOW'])) &
-                             (bndata['IRBLONG'] |bndata['IRBSHORT'])
+                             (bndata['IRBLONG'] | bndata['IRBSHORT'])
 
                              )
 

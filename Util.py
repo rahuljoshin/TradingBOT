@@ -3,6 +3,29 @@
 from datetime import datetime
 import pytz
 
+import logging
+
+# Set up the logger
+logger = logging.getLogger('BOT')
+logger.setLevel(logging.DEBUG)
+
+# Create a file handler
+file_handler = logging.FileHandler('0bot.log')
+file_handler.setLevel(logging.DEBUG)
+
+# Create a console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+
+# Create a logging format
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
+# Add the handlers to the logger
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
+
 
 def getISTTimeNow():
     # Set the timezone to Indian Standard Time

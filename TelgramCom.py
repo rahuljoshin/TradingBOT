@@ -1,6 +1,6 @@
 
 import requests
-
+from Util import logger
 class TemBot:
     bot_token = '6551575876:AAHFPAxcVaPT0Kqcl0HosnsIqA-j5K2nxng'
     chat_id = '1502486402'  # Replace with your chat ID
@@ -27,10 +27,10 @@ class TemBot:
 
         # Check the response status
         if response.status_code == 200:
-            print("Message sent successfully.")
+            logger.info("Message sent successfully.")
         else:
-            print(f"Failed to send the message. Error code: {response.status_code}")
-            print(f"Response content: {response.content}")
+            logger.error(f"Failed to send the message. Error code: {response.status_code}")
+            logger.error(f"Response content: {response.content}")
 
 
 
@@ -51,9 +51,9 @@ class TemBot:
             if str(r_chat_id) == self.chat_id:
                 resultMessage = data['result'][-1]['message']['text']
 
-                print(f"The last message from the bot is: {resultMessage}")
+                logger.info(f"The last message from the bot is: {resultMessage}")
         else:
-            print(f"Failed to get updates. Error code: {response.status_code}")
+            logger.error(f"Failed to get updates. Error code: {response.status_code}")
 
         return resultMessage
 
