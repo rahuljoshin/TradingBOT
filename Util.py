@@ -7,15 +7,15 @@ import logging
 
 # Set up the logger
 logger = logging.getLogger('BOT')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # Create a file handler
 file_handler = logging.FileHandler('0bot.log')
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.INFO)
 
 # Create a console handler
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(logging.INFO)
 
 # Create a logging format
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
