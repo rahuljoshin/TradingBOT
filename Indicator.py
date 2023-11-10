@@ -25,7 +25,7 @@ import ta as ta
 class Indicator:
     Signal = namedtuple('Signal', ['data', 'is_dirty'])
 
-    tradeTrigger = TradeTrigger()
+    #tradeTrigger = TradeTrigger()
 
     # All the data for timeframes
     newSignalData = {
@@ -66,7 +66,7 @@ class Indicator:
         # self.derNse = NSE()
         # result data based on 5,30 mins data
         self.rData = pd.DataFrame()
-        tradeTrigger = TradeTrigger()
+        #tradeTrigger = TradeTrigger()
 
     def execute(self):
         self.calculatePivotLevels()
@@ -75,7 +75,7 @@ class Indicator:
 
             self.getTopPriceVolumesforDay()
 
-            self.tradeTrigger.execute(self)
+            #self.tradeTrigger.execute(self)
 
         self.saveCSVs()
 

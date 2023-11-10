@@ -1,4 +1,4 @@
-from Indicator import Indicator
+#from Indicator import Indicator
 from datetime import datetime
 from Util import logger
 
@@ -34,13 +34,15 @@ class Trade:
 
 
 class TradeTrigger:
-    Indicator = Indicator()
+
     Trade = Trade()
 
     def __init__(self):
-        self.Indicator = Indicator()
+
         self.Trade = Trade()
 
+    def reset(self):
+        self.Trade = Trade()
     def execute(self, ind):
 
         if not self.Trade.tradeOn:

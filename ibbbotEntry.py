@@ -4,6 +4,7 @@ stop_event = threading.Event()
 restart_event = threading.Event()
 terminate_event = threading.Event()
 
+from TradeTrigger import TradeTrigger
 from Indicator import Indicator
 
 from TelgramCom import TemBot
@@ -11,6 +12,7 @@ from Util import getISTTimeNow
 from Util import logger
 
 ind = Indicator()
+tradeTrigger = TradeTrigger()
 
 
 def executeRun():
@@ -23,6 +25,8 @@ def executeRun():
     try:
         if restart_event.is_set():
             ind.reset()
+            tradeTrigger.reset()
+
             logger.info("RESTARTED")
             bot.sendMessage("RESTARTED")
             restart_event.clear()
@@ -31,6 +35,7 @@ def executeRun():
         if not stop_event.is_set():
 
             ind.execute()
+            tradeTrigger.execute(ind)
             current_time = getISTTimeNow()
             msg = f"Execute SUCCESS at {current_time}"
             logger.info(msg)
