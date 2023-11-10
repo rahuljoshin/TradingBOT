@@ -1,4 +1,4 @@
-#from Indicator import Indicator
+from Indicator import Indicator
 from datetime import datetime
 from Util import logger
 
@@ -36,6 +36,7 @@ class Trade:
 class TradeTrigger:
 
     Trade = Trade()
+    Indicator = Indicator()
 
     def __init__(self):
 

@@ -12,7 +12,7 @@ from collections import namedtuple
 
 from Util import logger
 
-from TradeTrigger import TradeTrigger
+#from TradeTrigger import TradeTrigger
 
 from Util import getISTTimeNow
 
