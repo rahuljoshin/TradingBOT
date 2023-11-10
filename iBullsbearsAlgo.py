@@ -84,6 +84,7 @@ thread2 = threading.Thread(target=executeRun)
 
 def start():
     # Start the threads
+    print("This is old fuction for start. Now this is repalced with scheduler. Please check entry point")
     thread1.start()
     thread2.start()
 

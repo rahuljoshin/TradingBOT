@@ -219,8 +219,9 @@ plt.show()
 from Banknifty import BankniftyCls
 from Indicator import Indicator
 algo = Indicator()
-records = algo.getTopPriceVolumesforDay()
-
+records = algo.getSignals()
+records.to_csv('record.csv', header=True, index=True)
+'''
 bank = BankniftyCls()
 data = bank.get_BNData()
 d= pd.DataFrame()
@@ -242,3 +243,4 @@ for record in top_3_records:
 
 print(d)
 #algo.allSignals()
+'''

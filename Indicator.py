@@ -4,7 +4,6 @@ from Banknifty import BankniftyCls
 
 from TelgramCom import TemBot
 
-from datetime import date
 from datetime import datetime, time
 from datetime import timedelta
 import numpy as np
@@ -24,15 +23,32 @@ import ta as ta
 class Indicator:
     Signal = namedtuple('Signal', ['data', 'is_dirty'])
 
+    # All the data for timeframes
+    newSignalData = {
+        '1m': Signal(data=pd.DataFrame(), is_dirty=False),
+        '5m': Signal(data=pd.DataFrame(), is_dirty=False),
+        '15m': Signal(data=pd.DataFrame(), is_dirty=False),
+        '30m': Signal(data=pd.DataFrame(), is_dirty=False),
+        '1d': Signal(data=pd.DataFrame(), is_dirty=False)
+    }
+
+    TCPR = pivot = BCPR = s1 = s2 = s3 = r1 = r2 = r3 = phigh = plow = pclose = 0.0
+
+    # Top 3 price and volumes
+    top_vol_records = []
+    rData = pd.DataFrame()
+
     def __init__(self):
         self.reset()
 
     def reset(self):
         # [1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo]
-        self.TCPR = self.pivot = self.BCPR = self.s1 = self.s2 = self.s3 = self.r1 = self.r2 = self.r3 = 0.0
+        self.TCPR = self.pivot = self.BCPR = self.s1 = self.s2 = self.s3 = self.r1 = self.r2 = self.r3 = self.phigh = self.plow = self.pclose =0.0
 
-        self.signalData = pd.DataFrame()
+        # Top 3 price and volumes
+        self.top_vol_records = []
 
+        # All the data for timeframes
         self.newSignalData = {
             '1m': self.Signal(data=pd.DataFrame(), is_dirty=False),
             '5m': self.Signal(data=pd.DataFrame(), is_dirty=False),
@@ -41,65 +57,46 @@ class Indicator:
             '1d': self.Signal(data=pd.DataFrame(), is_dirty=False)
         }
 
-        '''self.signal_datas = {'1m': pd.DataFrame(),
-                             '5m': pd.DataFrame(),
-                             '15m': pd.DataFrame(),
-                             '30m': pd.DataFrame(),
-                             '1d': pd.DataFrame()}'''
-
         # self.derNse = NSE()
+        # result data based on 5,30 mins data
         self.rData = pd.DataFrame()
 
     def execute(self):
         self.calculatePivotLevels()
         if self.allSignals():
+            self.buyorSell()
 
-            tmp_result = self.buyorSell()
-            last_result = self.rData.iloc[-1]['result'] if len(self.rData) else ''
-            if tmp_result != last_result:
-                new_row = {'result': tmp_result, 'time': getISTTimeNow()}
-
-                # Create a new DataFrame with the new row
-                new_df = pd.DataFrame(new_row, index=[0])
-
-                # Concatenate the new DataFrame with the original DataFrame
-                self.rData = pd.concat([self.rData, new_df], ignore_index=True)
-
-        message = f"{'Result'} {len(self.rData)} {'is:'} {self.rData.iloc[-1]['result']} {'from'} {self.rData.iloc[-1]['time']}"
-        bot = TemBot()
-        bot.sendMessage(message)
+            self.getTopPriceVolumesforDay()
 
         self.saveCSVs()
 
-        logger.info(message)
-        #print(message)
-
     def saveCSVs(self):
         try:
-            #print('Signal CSV save started')
+            # print('Signal CSV save started')
             logger.info('Signal CSV save started')
             self.rData.to_csv('0sign.csv', header=True, index=True)
-            #print('Signal CSV save end')
+            # print('Signal CSV save end')
             logger.info('Signal CSV save end')
 
             for key, value in self.newSignalData.items():
                 if value.is_dirty:
-                    logger.info(f"{'Saving CSV'} {str(key)} {'started'}")
-                    #print('Saving CSV', str(key), 'started')
+                    message = f"{'Saving'} {str(key)} {'CSV started'}"
+                    logger.info(message)
+                    # print('Saving CSV', str(key), 'started')
                     data = value.data
                     self.newSignalData[key] = self.newSignalData[key]._replace(is_dirty=False)
-                    #self.newSignalData[key].is_dirty = False
+                    # self.newSignalData[key].is_dirty = False
 
                     data.to_csv(f'{str(key)}.csv', header=True, index=True)
 
-                    logger.info(f"{'Saving CSV'} {str(key)} {'end'}")
+                    message = f"{'Saving'} {str(key)} {'CSV end'}"
+                    logger.info(message)
 
-        except Exception as e:
+        except (ConnectionResetError, ConnectionAbortedError) as e:
             logger.error("Error in CSV dump")
 
     def forceRecal(self, time='5m'):
         self.newSignalData[time] = self.newSignalData[time]._replace(is_dirty=True)
-
 
     def buyorSell(self):
         result = 'WAIT'
@@ -150,6 +147,20 @@ class Indicator:
         vwapBar = data5.iloc[-2]['VWAPBAR']
         prevwapbar = data5.iloc[-2]['PVWAPBAR']
 
+        pLowBar = data5.iloc[-2]['PRELOW']
+        pHighBar = data5.iloc[-2]['PREHIGH']
+
+        pivotBar = data5.iloc[-2]['PIVOT']
+
+        r1Bar = data5.iloc[-2]['R1']
+        r2Bar = data5.iloc[-2]['R2']
+        r3Bar = data5.iloc[-2]['R3']
+
+        s1Bar = data5.iloc[-2]['S1']
+        s2Bar = data5.iloc[-2]['S2']
+        s3Bar = data5.iloc[-2]['S3']
+
+
         if buy30min and buy5min:
             result = 'BESTBUY'
         elif sell30min and sell5min:
@@ -160,11 +171,53 @@ class Indicator:
             result = 'QUICKBUY'
 
         if goldenBar:
-            result = f"{result} {'***5MIN-GOLDBAR***'}"
+            result = f"{result} {'*** 5MIN-GOLDBAR ***'}"
         if vwapBar:
-            result = f"{result} {'***5MIN-VWAPBAR***'}"
+            result = f"{result} {'*** 5MIN-VWAPBAR ***'}"
         if prevwapbar:
-            result = f"{result} {'***5MIN-PRE-VWAPBAR***'}"
+            result = f"{result} {'*** 5MIN-PRE-VWAPBAR ***'}"
+
+        if pivotBar:
+            result = f"{result} {'$$$ 5MIN-PIVOTBAR $$$'}"
+
+        if r1Bar:
+            result = f"{result} {'$$$ 5MIN-R1BAR $$$'}"
+        if r2Bar:
+            result = f"{result} {'$$$ 5MIN-R2BAR $$$'}"
+
+        if r3Bar:
+            result = f"{result} {'$$$ 5MIN-R3BAR $$$'}"
+
+        if s1Bar:
+            result = f"{result} {'$$$ 5MIN-S1BAR $$$'}"
+
+        if s2Bar:
+            result = f"{result} {'$$$5MIN-S2BAR $$$'}"
+
+        if s3Bar:
+            result = f"{result} {'$$$5MIN-S3BAR $$$'}"
+
+        if pLowBar:
+            result = f"{result} {'$$$5MIN-Previous LOWBAR $$$'}"
+
+        if pHighBar:
+            result = f"{result} {'$$$5MIN-Previous HighBAR $$$'}"
+
+        last_result = self.rData.iloc[-1]['result'] if len(self.rData) else ''
+
+        if result != last_result:
+            new_row = {'result': result, 'time': getISTTimeNow()}
+
+            # Create a new DataFrame with the new row
+            new_df = pd.DataFrame(new_row, index=[0])
+
+            # Concatenate the new DataFrame with the original DataFrame
+            self.rData = pd.concat([self.rData, new_df], ignore_index=True)
+
+            message = f"{'Result'} {len(self.rData)} {'is:'} {self.rData.iloc[-1]['result']} {'from'} {self.rData.iloc[-1]['time']}"
+            bot = TemBot()
+            bot.sendMessage(message)
+            logger.info(message)
 
         return result
 
@@ -182,23 +235,25 @@ class Indicator:
 
     def getTopPriceVolumesforDay(self):
         time5 = '5m'
-        # data5 = self.signal_datas[time5]
-        data5 = self.newSignalData[time5].data
-        if len(data5) == 0:
-            data5 = self.getSignals()
 
-        # data5.to_csv('signal5.csv', header=True, index=True)
+        bank = BankniftyCls()
+        data5 = bank.get_BNData(interval=time5, period='1d')
 
+        num_levels = 10
         price_data, volume_data = self.fixed_range_volume_profile(prices=data5['Close'], volumes=data5['Volume'],
-                                                                  num_levels=10)
+                                                                  num_levels=num_levels)
 
         # Create a list of tuples containing price and volume data
         data = list(zip(price_data, volume_data))
 
         # Get the top 3 records based on the volume data in cloumn 1
-        top_3_records = heapq.nlargest(3, data, key=lambda x: x[1])
-        # logger.info(f"Price: {top_3_records[0][0]}, Volume: {top_3_records[0][1]}")
-        return top_3_records
+        self.top_vol_records = heapq.nlargest(3, data, key=lambda x: x[1])
+
+        for item in self.top_vol_records:
+            message = f"Price: {item[0]} Volume:{item[1]}"
+            logger.info(message)
+
+        return self.top_vol_records
 
     def calculatePivotLevels(self):
 
@@ -206,11 +261,15 @@ class Indicator:
             logger.info("Calculating pivot level")
             bank = BankniftyCls()
             data = bank.get_Candle(period='2d', interval='1d', latest=False)
-            self.TCPR, self.pivot, self.BCPR, self.s1, self.s2, self.s3, self.r1, self.r2, self.r3 = (
-                self.fibonacci_pivot_points(data.loc[1, 'High'], data.loc[1, 'Low'], data.loc[1, 'Close']))
+            self.phigh = data.loc[1]['High']
+            self.plow = data.loc[1]['Low']
+            self.pclose = data.loc[1]['Close']
 
-            my_tuple = ('TCPR:', self.TCPR, 'PIVOT:', self.pivot, 'BCPR:', self.BCPR, 'S1:', self.s1, 'S2:', self.s2, 'S3:',
-                  self.s3, 'R1:', self.r1, 'R2:', self.r2, 'R3:', self.r3)
+            self.setFibPivotPoints()
+
+            my_tuple = (
+                '\nTCPR:', self.TCPR, 'PIVOT:', self.pivot, 'BCPR:', self.BCPR, '\nS1:', self.s1, 'S2:', self.s2, 'S3:',
+                self.s3, '\nR1:', self.r1, 'R2:', self.r2, 'R3:', self.r3, '\nPHigh', self.phigh, 'PLow', self.plow, 'PClose', self.pclose)
 
             string_tuple = ' '.join([str(item) for item in my_tuple])
             logger.info(string_tuple)
@@ -249,32 +308,33 @@ class Indicator:
 
         return data['goLong'], data['goShort']
 
-    def fibonacci_pivot_points(self, high, low, close):
-        pivot = round((high + low + close) / 3, 2)
-        bCPR = round((high + low) / 2, 2)
-        TCPR = round(pivot + (pivot - bCPR), 2)
-        s1 = round(pivot - (0.382 * (high - low)), 2)
-        s2 = round(pivot - (0.618 * (high - low)), 2)
-        s3 = round(pivot - (1.0 * (high - low)), 2)
-        r1 = round(pivot + (0.382 * (high - low)), 2)
-        r2 = round(pivot + (0.618 * (high - low)), 2)
-        r3 = round(pivot + (1.0 * (high - low)), 2)
-        return TCPR, pivot, bCPR, s1, s2, s3, r1, r2, r3
+    def setFibPivotPoints(self):
+        self.pivot = round((self.phigh + self.plow + self.pclose) / 3, 2)
+        self.bCPR = round((self.phigh + self.plow) / 2, 2)
+        self.TCPR = round(self.pivot + (self.pivot - self.bCPR), 2)
+        self.s1 = round(self.pivot - (0.382 * (self.phigh - self.plow)), 2)
+        self.s2 = round(self.pivot - (0.618 * (self.phigh - self.plow)), 2)
+        self.s3 = round(self.pivot - (1.0 * (self.phigh - self.plow)), 2)
+        self.r1 = round(self.pivot + (0.382 * (self.phigh - self.plow)), 2)
+        self.r2 = round(self.pivot + (0.618 * (self.phigh - self.plow)), 2)
+        self.r3 = round(self.pivot + (1.0 * (self.phigh - self.plow)), 2)
 
     def allSignals(self):
         # count=1
         stat = False
         for key, value in self.newSignalData.items():
             if self.isRecalculate(str(key)):
-                logger.info(f"{'Find signals for'}{str(key)} {'started'}")
+                message = f"{'Find signals for'} {str(key)} {'started'}"
+                logger.info(message)
                 data = self.getSignals(interval=str(key))
-                #self.newSignalData[key].data = data
+
                 self.newSignalData[key] = self.newSignalData[key]._replace(data=data)
                 self.newSignalData[key] = self.newSignalData[key]._replace(is_dirty=True)
-                #self.newSignalData[key].is_dirty = True
+
                 stat = True
                 # data.to_csv(f'{str(key)}.csv', header=True, index=True)
-                logger.info(f"{'Find signals for'}{str(key)} {'end'}")
+                message = f"{'Find signals for'} {str(key)} {'end'}"
+                logger.info(message)
 
         return stat
 
@@ -348,10 +408,6 @@ class Indicator:
         elif interval == '1d':
             bndata = bank.get_BNData(interval=interval, period='60d')
 
-        # bndata['BUYORSELL'] = 'WAIT'
-        # bndata['IRBLONG'], bndata['IRBSHORT'] = 'FALSE', 'FALSE'
-        # bndata['TTMSQ'] = 'FALSE'
-
         # PSAR, RSI9,3,21 and stocastics
         bndata['SAR'] = ta.wrapper.PSARIndicator(high=bndata['High'], low=bndata['Low'], close=bndata['Close']).psar()
 
@@ -400,6 +456,9 @@ class Indicator:
 
         self.findGoldVWAPBuySell(bndata)
 
+        if interval == '5m' or interval == '15m':
+            self.touchingIMPLevels(bndata)
+
         # bndata = bndata.fillna(-1)
 
         bndata['BUYORSELL'] = 'WAIT'
@@ -414,6 +473,63 @@ class Indicator:
 
         bndata = bndata.round(2)
         return bndata
+
+    def touchingIMPLevels(self, bnData):
+
+        self.calculatePivotLevels()
+
+        bnData['PREHIGH'] = (
+            ((bnData['High'] > self.phigh) & (bnData['Low'] < self.phigh)
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['PRELOW'] = (
+            ((bnData['High'] > self.plow) & (bnData['Low'] < self.plow)
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['PIVOT'] = (
+            ((bnData['High'] > self.pivot) & (bnData['Low'] < self.pivot)
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['R1'] = (
+            ((bnData['High'] > self.r1) & (bnData['Low'] < self.r1)
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['R2'] = (
+            ((bnData['High'] > self.r2) & (bnData['Low'] < self.r2)
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['R3'] = (
+            ((bnData['High'] > self.r3) & (bnData['Low'] < self.r3)
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['S3'] = (
+            ((bnData['High'] > self.s3) & (bnData['Low'] < self.s3)
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+        bnData['S2'] = (
+            ((bnData['High'] > self.s2) & (bnData['Low'] < self.s2)
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['S1'] = (
+            ((bnData['High'] > self.s1) & (bnData['Low'] < self.s1)
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
 
     def findGoldVWAPBuySell(self, bndata):
 

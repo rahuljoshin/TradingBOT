@@ -1,7 +1,25 @@
-from TelgramCom import TemBot
-bot = TemBot()
+'''
+import schedule
+import time
 
-bot.sendMessage("this is a test message")
+def job():
+    print("Job is running...")
+
+# Schedule the job to run every second
+schedule.every(1).seconds.do(job)
+
+while True:
+    # Run pending scheduled jobs
+    schedule.run_pending()
+    time.sleep(1)
+
+'''
+
+'''
+from TelgramCom import TemBot
+bot = TemBot()'''
+
+#bot.sendMessage("this is a test message")
 
 '''
 #Dataframe tryouts

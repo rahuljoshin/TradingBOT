@@ -1,6 +1,7 @@
-
 import requests
 from Util import logger
+
+
 class TemBot:
     bot_token = '6551575876:AAHFPAxcVaPT0Kqcl0HosnsIqA-j5K2nxng'
     chat_id = '1502486402'  # Replace with your chat ID
@@ -11,19 +12,18 @@ class TemBot:
 
         url = f"{self.url}{'sendMessage'}"
 
-
-        #https://api.telegram.org/bot6551575876:AAHFPAxcVaPT0Kqcl0HosnsIqA-j5K2nxng/getUpdates
+        # https://api.telegram.org/bot6551575876:AAHFPAxcVaPT0Kqcl0HosnsIqA-j5K2nxng/getUpdates
         # Your chat ID and the message you want to send
 
-        #message = 'This is a test message from your Telegram bot.'
+        # message = 'This is a test message from your Telegram bot.'
 
         # Send the message to the bot
         response = requests.post(url, data={'chat_id': self.chat_id, 'text': message})
 
-        #message = '<b>This is a bold message in </b><i><a href="https://www.w3schools.com/colors/colors_picker.asp" style="color:red">red</a></i><b> color.</b>'
+        # message = '<b>This is a bold message in </b><i><a href="https://www.w3schools.com/colors/colors_picker.asp" style="color:red">red</a></i><b> color.</b>'
 
         # Send the message to the bot using HTML for formatting
-        #response = requests.post(url, data={'chat_id': self.chat_id, 'text': message, 'parse_mode': 'HTML'})
+        # response = requests.post(url, data={'chat_id': self.chat_id, 'text': message, 'parse_mode': 'HTML'})
 
         # Check the response status
         if response.status_code == 200:
@@ -31,9 +31,6 @@ class TemBot:
         else:
             logger.error(f"Failed to send the message. Error code: {response.status_code}")
             logger.error(f"Response content: {response.content}")
-
-
-
 
     def getResponse(self):
         url = f"{self.url}{'getUpdates'}"
@@ -71,6 +68,4 @@ class TemBot:
                 print(f"Received message: {message} from chat ID: {chat_id}")
         else:
             print(f"Failed to get updates. Error code: {response.status_code}")
-
-            '''
-
+        '''
