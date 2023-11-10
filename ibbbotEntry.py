@@ -35,7 +35,7 @@ def executeRun():
         if not stop_event.is_set():
 
             ind.execute()
-            tradeTrigger.execute(ind)
+            #tradeTrigger.execute(ind)
             current_time = getISTTimeNow()
             msg = f"Execute SUCCESS at {current_time}"
             logger.info(msg)
