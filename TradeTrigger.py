@@ -185,7 +185,9 @@ class TradeTrigger:
 
     # trail the stoploss to logical point
     def trailStopLoss(self):
-        pass
+        self.Trade.trailingSL = (self.Trade.Target1 + self.Trade.Target2) / 2
+        self.Trade.Target1 = self.Trade.Target2
+        self.Trade.Target2 = self.Trade.Target3
 
     # this function will decide if the target is hit
     def isTargetHit(self):
@@ -197,14 +199,14 @@ class TradeTrigger:
                 self.Trade.exit = data5.iloc[-2]['Close']
                 self.Trade.tradeOn = True
                 self.Trade.endtime = datetime.now()
-                self.Trade.pnl = self.Trade.exit - self.Trade.entry
+                self.Trade.pnl += self.Trade.exit - self.Trade.entry
                 self.trailStopLoss()
 
             if (self.Trade.buysell == 'SELL') and (data5.iloc[-2]['Close'] < self.Trade.Target1):
                 self.Trade.exit = data5.iloc[-2]['Close']
                 self.Trade.tradeOn = True
                 self.Trade.endtime = datetime.now()
-                self.Trade.pnl = self.Trade.entry - self.Trade.exit
+                self.Trade.pnl += self.Trade.entry - self.Trade.exit
                 self.trailStopLoss()
 
     def isTradeTriggered(self):
@@ -241,6 +243,18 @@ class TradeTrigger:
                 self.Trade.exit = data5.iloc[-2]['Close']
                 self.Trade.tradeOn = False
                 self.Trade.pnl = self.Trade.entry - self.Trade.exit
+
+            if self.Trade.trailingSL > 0:
+
+                if (self.Trade.buysell == 'BUY') and (data5.iloc[-2]['Close'] < self.Trade.trailingSL):
+                        self.Trade.exit = data5.iloc[-2]['Close']
+                        self.Trade.tradeOn = False
+                        self.Trade.pnl += self.Trade.exit - self.Trade.entry
+
+                if (self.Trade.buysell == 'SELL') and (data5.iloc[-2]['Close'] > self.Trade.trailingSL):
+                        self.Trade.exit = data5.iloc[-2]['Close']
+                        self.Trade.tradeOn = False
+                        self.Trade.pnl += self.Trade.entry - self.Trade.exit
 
 
 
