@@ -43,7 +43,7 @@ class Indicator:
 
     def reset(self):
         # [1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo]
-        self.TCPR = self.pivot = self.BCPR = self.s1 = self.s2 = self.s3 = self.r1 = self.r2 = self.r3 = self.phigh = self.plow = self.pclose =0.0
+        self.TCPR = self.pivot = self.BCPR = self.s1 = self.s2 = self.s3 = self.r1 = self.r2 = self.r3 = self.phigh = self.plow = self.pclose = 0.0
 
         # Top 3 price and volumes
         self.top_vol_records = []
@@ -160,7 +160,6 @@ class Indicator:
         s2Bar = data5.iloc[-2]['S2']
         s3Bar = data5.iloc[-2]['S3']
 
-
         if buy30min and buy5min:
             result = 'BESTBUY'
         elif sell30min and sell5min:
@@ -269,7 +268,8 @@ class Indicator:
 
             my_tuple = (
                 '\nTCPR:', self.TCPR, 'PIVOT:', self.pivot, 'BCPR:', self.BCPR, '\nS1:', self.s1, 'S2:', self.s2, 'S3:',
-                self.s3, '\nR1:', self.r1, 'R2:', self.r2, 'R3:', self.r3, '\nPHigh', self.phigh, 'PLow', self.plow, 'PClose', self.pclose)
+                self.s3, '\nR1:', self.r1, 'R2:', self.r2, 'R3:', self.r3, '\nPHigh', self.phigh, 'PLow', self.plow,
+                'PClose', self.pclose)
 
             string_tuple = ' '.join([str(item) for item in my_tuple])
             logger.info(string_tuple)
@@ -533,7 +533,7 @@ class Indicator:
 
     def findGoldVWAPBuySell(self, bndata):
 
-        bndata['GOLDBAR'] = (((bndata['High'] < bndata['GOLDUP']) &
+        '''bndata['GOLDBAR'] = (((bndata['High'] < bndata['GOLDUP']) &
                               (bndata['High'] > bndata['GOLDLOW'])) |
 
                              ((bndata['Low'] < bndata['GOLDUP']) &
@@ -543,15 +543,25 @@ class Indicator:
                               (bndata['Close'] > bndata['GOLDLOW'])) &
                              (bndata['IRBLONG'] | bndata['IRBSHORT'])
 
-                             )
+                             )'''
 
-        bndata['VWAPBAR'] = ((bndata['High'] > bndata['VWAP']) & (bndata['Low'] < bndata['VWAP'])
+        bndata['GOLDBAR'] = (
+
+                (((bndata['Low'] < bndata['GOLDUP']) &
+                  (bndata['GOLDUP']< bndata['High'])) & (bndata['IRBLONG'] | bndata['IRBSHORT']))|
+                (((bndata['Low'] < bndata['GOLD']) &
+                               (bndata['GOLD'] < bndata['High'])) &(bndata['IRBLONG'] | bndata['IRBSHORT'])) |
+                (((bndata['Low'] < bndata['GOLDLOW']) &
+                                (bndata['GOLDLOW']< bndata['High'])) &
+                 ((bndata['IRBLONG'] | bndata['IRBSHORT']))))
+
+        bndata['VWAPBAR'] = ( ((bndata['Low'] < bndata['VWAP']) & (bndata['VWAP'] < bndata['High']) )
                              &
                              (bndata['IRBLONG'] | bndata['IRBSHORT'])
                              )
 
-        bndata['PVWAPBAR'] = ((bndata['High'] > ((2 * bndata['GOLD']) - bndata['VWAP'])) & (
-                bndata['Low'] < ((2 * bndata['GOLD']) - bndata['VWAP']))
+        bndata['PVWAPBAR'] = ((bndata['Low'] < ((2 * bndata['GOLD']) - bndata['VWAP'])) &
+                              (((2 * bndata['GOLD']) - bndata['VWAP']) < bndata['High'])
                               &
                               (bndata['IRBLONG'] | bndata['IRBSHORT'])
                               )
