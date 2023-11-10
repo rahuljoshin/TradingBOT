@@ -12,6 +12,8 @@ from collections import namedtuple
 
 from Util import logger
 
+from TradeTrigger import TradeTrigger
+
 from Util import getISTTimeNow
 
 import ta as ta
@@ -23,6 +25,8 @@ import ta as ta
 class Indicator:
     Signal = namedtuple('Signal', ['data', 'is_dirty'])
 
+    tradeTrigger = TradeTrigger()
+
     # All the data for timeframes
     newSignalData = {
         '1m': Signal(data=pd.DataFrame(), is_dirty=False),
@@ -33,6 +37,8 @@ class Indicator:
     }
 
     TCPR = pivot = BCPR = s1 = s2 = s3 = r1 = r2 = r3 = phigh = plow = pclose = 0.0
+
+
 
     # Top 3 price and volumes
     top_vol_records = []
@@ -60,6 +66,7 @@ class Indicator:
         # self.derNse = NSE()
         # result data based on 5,30 mins data
         self.rData = pd.DataFrame()
+        tradeTrigger = TradeTrigger()
 
     def execute(self):
         self.calculatePivotLevels()
@@ -67,6 +74,8 @@ class Indicator:
             self.buyorSell()
 
             self.getTopPriceVolumesforDay()
+
+            self.tradeTrigger.execute(self)
 
         self.saveCSVs()
 
