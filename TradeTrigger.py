@@ -13,7 +13,7 @@ class Trade:
     Target2 = -1.0
     Target3 = -1.0
     tradeOn = False
-    buysell = 'WAIT'
+    buySell = 'WAIT'
     pnl = 0.0
 
     def __init__(self):
@@ -29,14 +29,14 @@ class Trade:
         self.Target1 = -1.0
         self.Target2 = -1.0
         self.Target3 = -1.0
-        self.buysell = 'WAIT'
+        self.buySell = 'WAIT'
         self.pnl = 0.0
 
 
 class TradeTrigger:
 
     Trade = Trade()
-    Indicator = Indicator()
+    TradeInd = Indicator()
 
     def __init__(self):
 
@@ -47,7 +47,7 @@ class TradeTrigger:
     def execute(self, ind):
 
         if not self.Trade.tradeOn:
-            self.Indicator = ind
+            self.TradeInd = ind
             self.setEntryAndSL()
             self.setTarget()
             self.isTradeTriggered()
@@ -67,7 +67,7 @@ class TradeTrigger:
 
         logger.log(f"'\nTrade start:', {self.Trade.starttime}, 'Trade end:', {self.Trade.starttime}")
         logger.log(f"'\nEntry:', {self.Trade.entry}, 'Exit:', {self.Trade.exit}")
-        logger.log(f"'\nPNL:', {self.Trade.pnl}, 'Type:', {self.Trade.buysell}")
+        logger.log(f"'\nPNL:', {self.Trade.pnl}, 'Type:', {self.Trade.buySell}")
         logger.log(f"'\nOrgSL:', {self.Trade.orgStopLoss}, 'TrailngSL:', {self.Trade.trailingSL}")
         logger.log(f"'\nTarget1:', {self.Trade.Target1}, 'Target2:', {self.Trade.Target2}, 'Target3:', {self.Trade.Target3} ")
 
@@ -76,45 +76,45 @@ class TradeTrigger:
     def setEntryAndSL(self):
         # get last candle for the 5 min with IRB buy or sell
         time5 = '5m'
-        data5 = Indicator.newSignalData[time5].data
+        data5 = self.TradeInd.newSignalData[time5].data
         data5 = data5.reset_index()
 
         lastIRB = data5.iloc[-2]['IRBLONG'] or data5.iloc[-2]['IRBSHORT']
         secondLastIRB = data5.iloc[-3]['IRBLONG'] or data5.iloc[-3]['IRBSHORT']
 
-        last_result = Indicator.rData.iloc[-1]['result'] if len(Indicator.rData) else ''
+        last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
 
         last_result = last_result.lower()
         if 'buy' in last_result and lastIRB:
             self.Trade.entry = data5.iloc[-2]['High']
             self.Trade.orgStopLoss = data5.iLoc[-2]['Low']
-            self.Trade.buysell = 'BUY'
+            self.Trade.buySell = 'BUY'
 
         if 'buy' in last_result and secondLastIRB:
             self.Trade.entry = data5.iloc[-3]['High']
             self.Trade.orgStopLoss = data5.iLoc[-3]['Low']
-            self.Trade.buysell = 'BUY'
+            self.Trade.buySell = 'BUY'
 
         if 'sell' in last_result and lastIRB:
             self.Trade.entry = data5.iloc[-2]['Low']
             self.Trade.orgStopLoss = data5.iLoc[-2]['High']
-            self.Trade.buysell = 'SELL'
+            self.Trade.buySell = 'SELL'
 
 
         if 'sell' in last_result and secondLastIRB:
             self.Trade.entry = data5.iloc[-3]['Low']
             self.Trade.orgStopLoss = data5.iLoc[-3]['High']
-            self.Trade.buysell = 'SELL'
+            self.Trade.buySell = 'SELL'
 
     # this function will decide the target point
     def setTarget(self):
         time5 = '5m'
-        data5 = Indicator.newSignalData[time5].data
+        data5 = self.TradeInd.newSignalData[time5].data
         data5 = data5.reset_index()
 
-        last_result = Indicator.rData.iloc[-1]['result'] if len(Indicator.rData) else ''
+        last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
 
-        close = data5[-2]['Close']
+        close = data5.iloc[-2]['Close']
 
         lastIRB = data5.iloc[-2]['IRBLONG'] or data5.iloc[-2]['IRBSHORT']
         secondLastIRB = data5.iloc[-3]['IRBLONG'] or data5.iloc[-3]['IRBSHORT']
@@ -134,57 +134,57 @@ class TradeTrigger:
 
     def setTargetBuy(self, close):
 
-        if Indicator.r1 < close < Indicator.r2:
-            self.Trade.Target1 = Indicator.r2
-            self.Trade.Target2 = Indicator.r3
-            self.Trade.Target3 = Indicator.r3
+        if self.TradeInd.r1 < close < self.TradeInd.r2:
+            self.Trade.Target1 = self.TradeInd.r2
+            self.Trade.Target2 = self.TradeInd.r3
+            self.Trade.Target3 = self.TradeInd.r3
 
-        if Indicator.pivot < close < Indicator.r1:
-            self.Trade.Target1 = Indicator.r1
-            self.Trade.Target2 = Indicator.r2
-            self.Trade.Target3 = Indicator.r3
+        if self.TradeInd.pivot < close < self.TradeInd.r1:
+            self.Trade.Target1 = self.TradeInd.r1
+            self.Trade.Target2 = self.TradeInd.r2
+            self.Trade.Target3 = self.TradeInd.r3
 
-        if Indicator.s1 < close < Indicator.pivot:
-            self.Trade.Target1 = Indicator.pivot
-            self.Trade.Target2 = Indicator.r1
-            self.Trade.Target3 = Indicator.r2
+        if self.TradeInd.s1 < close < self.TradeInd.pivot:
+            self.Trade.Target1 = self.TradeInd.pivot
+            self.Trade.Target2 = self.TradeInd.r1
+            self.Trade.Target3 = self.TradeInd.r2
 
-        if Indicator.s2 < close < Indicator.s1:
-            self.Trade.Target1 = Indicator.s1
-            self.Trade.Target2 = Indicator.pivot
-            self.Trade.Target3 = Indicator.r1
+        if self.TradeInd.s2 < close < self.TradeInd.s1:
+            self.Trade.Target1 = self.TradeInd.s1
+            self.Trade.Target2 = self.TradeInd.pivot
+            self.Trade.Target3 = self.TradeInd.r1
 
-        if Indicator.s3 < close < Indicator.s2:
-            self.Trade.Target1 = Indicator.s2
-            self.Trade.Target2 = Indicator.s1
-            self.Trade.Target3 = Indicator.pivot
+        if self.TradeInd.s3 < close < self.TradeInd.s2:
+            self.Trade.Target1 = self.TradeInd.s2
+            self.Trade.Target2 = self.TradeInd.s1
+            self.Trade.Target3 = self.TradeInd.pivot
 
     def setTargetSell(self, close):
 
-        if Indicator.r2 < close < Indicator.r3:
-            self.Trade.Target1 = Indicator.r2
-            self.Trade.Target2 = Indicator.r1
-            self.Trade.Target3 = Indicator.pivot
+        if self.TradeInd.r2 < close < self.TradeInd.r3:
+            self.Trade.Target1 = self.TradeInd.r2
+            self.Trade.Target2 = self.TradeInd.r1
+            self.Trade.Target3 = self.TradeInd.pivot
 
-        if Indicator.r1 < close < Indicator.r2:
-            self.Trade.Target1 = Indicator.r1
-            self.Trade.Target2 = Indicator.pivot
-            self.Trade.Target3 = Indicator.s1
+        if self.TradeInd.r1 < close < self.TradeInd.r2:
+            self.Trade.Target1 = self.TradeInd.r1
+            self.Trade.Target2 = self.TradeInd.pivot
+            self.Trade.Target3 = self.TradeInd.s1
 
-        if Indicator.pivot < close < Indicator.r1:
-            self.Trade.Target1 = Indicator.pivot
-            self.Trade.Target2 = Indicator.s1
-            self.Trade.Target3 = Indicator.s2
+        if self.TradeInd.pivot < close < self.TradeInd.r1:
+            self.Trade.Target1 = self.TradeInd.pivot
+            self.Trade.Target2 = self.TradeInd.s1
+            self.Trade.Target3 = self.TradeInd.s2
 
-        if Indicator.s1 < close < Indicator.pivot:
-            self.Trade.Target1 = Indicator.s1
-            self.Trade.Target2 = Indicator.s2
-            self.Trade.Target3 = Indicator.s3
+        if self.TradeInd.s1 < close < self.TradeInd.pivot:
+            self.Trade.Target1 = self.TradeInd.s1
+            self.Trade.Target2 = self.TradeInd.s2
+            self.Trade.Target3 = self.TradeInd.s3
 
-        if Indicator.s1 < close < Indicator.s2:
-            self.Trade.Target1 = Indicator.s2
-            self.Trade.Target2 = Indicator.s3
-            self.Trade.Target3 = Indicator.s3
+        if self.TradeInd.s1 < close < self.TradeInd.s2:
+            self.Trade.Target1 = self.TradeInd.s2
+            self.Trade.Target2 = self.TradeInd.s3
+            self.Trade.Target3 = self.TradeInd.s3
 
     # trail the stoploss to logical point
     def trailStopLoss(self):
@@ -195,18 +195,18 @@ class TradeTrigger:
     # this function will decide if the target is hit
     def isTargetHit(self):
         if self.Trade.tradeOn:
-            time5 = '5m'
-            data5 = Indicator.newSignalData[time5].data
-            data5 = data5.reset_index()
-            if (self.Trade.buysell == 'BUY') and (data5.iloc[-2]['Close'] > self.Trade.Target1):
-                self.Trade.exit = data5.iloc[-2]['Close']
+            time1 = '1m'
+            data1 = self.TradeInd.newSignalData[time1].data
+            data1 = data1.reset_index()
+            if (self.Trade.buySell == 'BUY') and (data1.iloc[-2]['Close'] > self.Trade.Target1):
+                self.Trade.exit = data1.iloc[-2]['Close']
                 self.Trade.tradeOn = True
                 self.Trade.endtime = datetime.now()
                 self.Trade.pnl += self.Trade.exit - self.Trade.entry
                 self.trailStopLoss()
 
-            if (self.Trade.buysell == 'SELL') and (data5.iloc[-2]['Close'] < self.Trade.Target1):
-                self.Trade.exit = data5.iloc[-2]['Close']
+            if (self.Trade.buySell == 'SELL') and (data1.iloc[-2]['Close'] < self.Trade.Target1):
+                self.Trade.exit = data1.iloc[-2]['Close']
                 self.Trade.tradeOn = True
                 self.Trade.endtime = datetime.now()
                 self.Trade.pnl += self.Trade.entry - self.Trade.exit
@@ -217,13 +217,13 @@ class TradeTrigger:
         #Check that 5 min close is above high for buy and 5 min close below low for sell
         if self.Trade.entry > 0 and self.Trade.orgStopLoss > 0:
             time5 = '5m'
-            data5 = Indicator.newSignalData[time5].data
+            data5 = self.TradeInd.newSignalData[time5].data
             data5 = data5.reset_index()
-            if (self.Trade.buysell == 'BUY') and (data5.iloc[-2]['Close'] > self.Trade.entry):
+            if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] > self.Trade.entry):
                 self.Trade.tradeOn = True
                 self.Trade.startTime = datetime.now()
 
-            if (self.Trade.buysell == 'SELL') and (data5.iloc[-2]['Close'] < self.Trade.entry):
+            if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] < self.Trade.entry):
                 self.Trade.tradeOn = True
                 self.Trade.startTime = datetime.now()
 
@@ -235,26 +235,26 @@ class TradeTrigger:
     def isStopLossHit(self):
         if self.Trade.tradeOn:
             time5 = '5m'
-            data5 = Indicator.newSignalData[time5].data
+            data5 = self.TradeInd.newSignalData[time5].data
             data5 = data5.reset_index()
-            if (self.Trade.buysell == 'BUY') and (data5.iloc[-2]['Close'] < self.Trade.orgStopLoss):
+            if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] < self.Trade.orgStopLoss):
                 self.Trade.exit = data5.iloc[-2]['Close']
                 self.Trade.tradeOn = False
                 self.Trade.pnl = self.Trade.exit - self.Trade.entry
 
-            if (self.Trade.buysell == 'SELL') and (data5.iloc[-2]['Close'] > self.Trade.orgStopLoss):
+            if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] > self.Trade.orgStopLoss):
                 self.Trade.exit = data5.iloc[-2]['Close']
                 self.Trade.tradeOn = False
                 self.Trade.pnl = self.Trade.entry - self.Trade.exit
 
-            if self.Trade.trailingSL > 0:
+            if self.Trade.trailingSL > 0 and self.Trade.tradeOn:
 
-                if (self.Trade.buysell == 'BUY') and (data5.iloc[-2]['Close'] < self.Trade.trailingSL):
+                if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] < self.Trade.trailingSL):
                         self.Trade.exit = data5.iloc[-2]['Close']
                         self.Trade.tradeOn = False
                         self.Trade.pnl += self.Trade.exit - self.Trade.entry
 
-                if (self.Trade.buysell == 'SELL') and (data5.iloc[-2]['Close'] > self.Trade.trailingSL):
+                if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] > self.Trade.trailingSL):
                         self.Trade.exit = data5.iloc[-2]['Close']
                         self.Trade.tradeOn = False
                         self.Trade.pnl += self.Trade.entry - self.Trade.exit

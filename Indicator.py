@@ -1,4 +1,5 @@
 import pandas as pd
+import pandas_ta as ta
 
 from Banknifty import BankniftyCls
 
@@ -7,6 +8,7 @@ from TelgramCom import TemBot
 from datetime import datetime, time
 from datetime import timedelta
 import numpy as np
+
 import heapq
 from collections import namedtuple
 
@@ -613,6 +615,7 @@ class Indicator:
 
         return BBUpperBand, BBLowerBand
 
+
     def findSuperVal(self, close, high, low, length, mult):
         atr = (high - low).rolling(window=length).mean() * mult
         up = (high + low) / 2 + atr
@@ -658,6 +661,48 @@ class Indicator:
 
         return (max_val + min_val) / 2
 
+    def avg1(self, src, length, mult):
+        atr = (src['high'] - src['low']).rolling(window=length).mean() * mult
+
+
+        #atr = ta.atr(src['high'], src['low'], src['close'], length=length).values * mult
+        up = (src['high'] + src['low']) / 2 + atr
+        dn = (src['high'] + src['low']) / 2 - atr
+        upper, lower = 0.0, 0.0
+
+        upper = np.where(src['close'].shift(1) < upper, np.minimum(up, upper), up)
+        lower = np.where(src['close'].shift(1) > lower, np.maximum(dn, lower), dn)
+
+        os, max_val, min_val = 0, src['close'].iloc[0], src['close'].iloc[0]
+
+        os = np.where(src['close'] > upper, 1, np.where(src['close'] < lower, 0, os))
+        spt = np.where(os == 1, lower, upper)
+
+        shifted_max_val = np.roll(max_val, 1)
+
+        max_val = np.where(
+            np.where(src['close'] > spt, True, False),
+            np.maximum(src['close'], shifted_max_val),
+            np.where(
+                os == 1,
+                np.maximum(src['close'], shifted_max_val),
+                spt
+            )
+        )
+
+        shifted_min_val = np.roll(min_val, 1)
+
+        min_val = np.where(
+            np.where(src['close'] > spt, True, False),
+            np.minimum(src['close'], shifted_min_val),
+            np.where(
+                os == 0,
+                np.minimum(src['close'], shifted_min_val),
+                spt
+            )
+        )
+        return np.nanmean([max_val, min_val], axis=0)
+
     def calcSuperIchi(self, close, high, low):
 
         # Define inputs
@@ -669,14 +714,35 @@ class Indicator:
         spanB_mult = 6.0
         offset = 26
 
-        # Calculate Tenkan-sen
+        '''
+        #tenkan = self.avg(close, high, low, tenkan_len, tenkan_mult)
         tenkan = self.findSuperVal(close, high, low, tenkan_len, tenkan_mult).values
 
         # Calculate Kijun-sen
         kijun = self.findSuperVal(close, high, low, kijun_len, kijun_mult).values
+        #kijun = self.avg(close, high, low, kijun_len, kijun_mult)
 
         # Calculate Senkou Span A and Senkou Span B
         senkouA = (kijun + tenkan) / 2
         senkouB = self.findSuperVal(close, high, low, spanB_len, spanB_mult).values
+        #senkouB = self.avg(close, high, low, spanB_len, spanB_mult)
 
         return tenkan, kijun, senkouA, senkouB
+        '''
+
+        data = {'close': close, 'high': high, 'low': low}  # Replace with your actual data
+        src = pd.DataFrame(data)
+        tenkan = self.avg1(src, tenkan_len, tenkan_mult)
+        kijun = self.avg1(src, kijun_len, kijun_mult)
+
+        senkouA = np.nanmean([kijun, tenkan], axis=0)
+        senkouB = self.avg1(src, spanB_len, spanB_mult)
+        return tenkan, kijun, senkouA, senkouB
+
+
+
+
+
+    # Assuming 'close', 'high', 'low', 'tenkan_len', 'tenkan_mult', 'kijun_len', 'kijun_mult', 'spanB_len', 'spanB_mult'
+    # are defined before calling the following lines
+

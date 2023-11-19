@@ -43,13 +43,15 @@ class TemBot:
         # Check if the response is successful
         if response.status_code == 200:
             data = response.json()
-            if len(data):
+            if len(data['result']):
                 r_chat_id = data['result'][-1]['message']['chat']['id']
                 # Get the last message
                 if str(r_chat_id) == self.chat_id:
                     resultMessage = data['result'][-1]['message']['text']
 
                 logger.info(f"The last message from the bot is: {resultMessage}")
+            else:
+                logger.info("No response from BOT")
         else:
             logger.error(f"Failed to get updates. Error code: {response.status_code}")
 
