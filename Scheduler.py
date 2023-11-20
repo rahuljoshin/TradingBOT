@@ -9,7 +9,7 @@ import sys
 
 sys.setrecursionlimit(5000)  # Set the recursion limit to a higher value
 
-#executeRun()
+executeRun()
 def job():
     executeRun()
 

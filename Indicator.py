@@ -1,6 +1,8 @@
 import pandas as pd
 import pandas_ta as ta
 
+import ta as lib
+
 from Banknifty import BankniftyCls
 
 from TelgramCom import TemBot
@@ -14,12 +16,8 @@ from collections import namedtuple
 
 from Util import logger
 
-#from TradeTrigger import TradeTrigger
 
 from Util import getISTTimeNow
-
-import ta as ta
-
 
 # from Derivatives import NSE
 
@@ -40,6 +38,8 @@ class Indicator:
 
     TCPR = pivot = BCPR = s1 = s2 = s3 = r1 = r2 = r3 = phigh = plow = pclose = 0.0
 
+    tOpen = tHigh = tLow = tClose = 0.0
+
 
 
     # Top 3 price and volumes
@@ -52,6 +52,8 @@ class Indicator:
     def reset(self):
         # [1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo]
         self.TCPR = self.pivot = self.BCPR = self.s1 = self.s2 = self.s3 = self.r1 = self.r2 = self.r3 = self.phigh = self.plow = self.pclose = 0.0
+
+        self.tOpen = self.tHigh = self.tLow = self.tClose = 0.0
 
         # Top 3 price and volumes
         self.top_vol_records = []
@@ -72,6 +74,7 @@ class Indicator:
 
     def execute(self):
         self.calculatePivotLevels()
+        self.todayOHLC()
         if self.allSignals():
             self.buyorSell()
 
@@ -265,6 +268,16 @@ class Indicator:
 
         return self.top_vol_records
 
+    def todayOHLC(self):
+        bank = BankniftyCls()
+        data = bank.get_Candle(period='1d', interval='1d', latest=True)
+        self.tOpen = data.loc[1]['Open']
+        self.tHigh = data.loc[1]['High']
+        self.tLow = data.loc[1]['Low']
+        self.tClose = data.loc[1]['Close']
+
+        logger.info(f"\nTodays# Open:{self.tOpen} High:{self.tHigh} Low:{self.tLow} Close:{self.tClose}")
+
     def calculatePivotLevels(self):
 
         if self.TCPR == 0:
@@ -420,15 +433,15 @@ class Indicator:
             bndata = bank.get_BNData(interval=interval, period='60d')
 
         # PSAR, RSI9,3,21 and stocastics
-        bndata['SAR'] = ta.wrapper.PSARIndicator(high=bndata['High'], low=bndata['Low'], close=bndata['Close']).psar()
+        bndata['SAR'] = lib.wrapper.PSARIndicator(high=bndata['High'], low=bndata['Low'], close=bndata['Close']).psar()
 
-        bndata['RSI9'] = ta.wrapper.RSIIndicator(close=bndata['Close'], window=9).rsi()
-        bndata['EMA3_RSI'] = ta.wrapper.EMAIndicator(bndata['RSI9'], window=3).ema_indicator()
+        bndata['RSI9'] = lib.wrapper.RSIIndicator(close=bndata['Close'], window=9).rsi()
+        bndata['EMA3_RSI'] = lib.wrapper.EMAIndicator(bndata['RSI9'], window=3).ema_indicator()
 
         # Calculate VWMA with a period of 21 on RSI
         bndata['VWMA21_RSI'] = self.vwma(bndata['RSI9'], bndata['Volume'], period=21)
 
-        stoch = ta.momentum.StochasticOscillator(high=bndata['High'], low=bndata['Low'], close=bndata['Close'],
+        stoch = lib.momentum.StochasticOscillator(high=bndata['High'], low=bndata['Low'], close=bndata['Close'],
                                                  window=4,
                                                  smooth_window=1)
         bndata['%K'] = stoch.stoch()
@@ -665,7 +678,7 @@ class Indicator:
         atr = (src['high'] - src['low']).rolling(window=length).mean() * mult
 
 
-        #atr = ta.atr(src['high'], src['low'], src['close'], length=length).values * mult
+        #atr = lib.atr(src['high'], src['low'], src['close'], length=length).values * mult
         up = (src['high'] + src['low']) / 2 + atr
         dn = (src['high'] + src['low']) / 2 - atr
         upper, lower = 0.0, 0.0
