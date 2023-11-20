@@ -87,23 +87,23 @@ class TradeTrigger:
         last_result = last_result.lower()
         if 'buy' in last_result and lastIRB:
             self.Trade.entry = data5.iloc[-2]['High']
-            self.Trade.orgStopLoss = data5.iLoc[-2]['Low']
+            self.Trade.orgStopLoss = data5.iloc[-2]['Low']
             self.Trade.buySell = 'BUY'
 
         if 'buy' in last_result and secondLastIRB:
             self.Trade.entry = data5.iloc[-3]['High']
-            self.Trade.orgStopLoss = data5.iLoc[-3]['Low']
+            self.Trade.orgStopLoss = data5.iloc[-3]['Low']
             self.Trade.buySell = 'BUY'
 
         if 'sell' in last_result and lastIRB:
             self.Trade.entry = data5.iloc[-2]['Low']
-            self.Trade.orgStopLoss = data5.iLoc[-2]['High']
+            self.Trade.orgStopLoss = data5.iloc[-2]['High']
             self.Trade.buySell = 'SELL'
 
 
         if 'sell' in last_result and secondLastIRB:
             self.Trade.entry = data5.iloc[-3]['Low']
-            self.Trade.orgStopLoss = data5.iLoc[-3]['High']
+            self.Trade.orgStopLoss = data5.iloc[-3]['High']
             self.Trade.buySell = 'SELL'
 
     # this function will decide the target point
