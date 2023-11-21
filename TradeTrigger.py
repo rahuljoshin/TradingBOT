@@ -66,7 +66,7 @@ class TradeTrigger:
             self.TradeInd = ind
             self.reset()
 
-            self.setEntryAndSL()
+            self.setEntryAndSL1()
             self.setTarget()
             self.isTradeTriggered()
 
@@ -125,6 +125,39 @@ class TradeTrigger:
             self.Trade.entry = data5.iloc[-3]['Low']
             self.Trade.orgStopLoss = self.Trade.trailingSL = data5.iloc[-3]['High']
             self.Trade.buySell = 'SELL'
+
+    def setEntryAndSL1(self):
+        # get last candle for the 5 min with IRB buy or sell
+        time5 = '5m'
+        data5 = self.TradeInd.newSignalData[time5].data
+        data5 = data5.reset_index()
+
+        last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
+
+        last_result = last_result.lower()
+        if 'buy' in last_result:
+            lastIRBLong = data5.iloc[-2]['IRBLONG']
+            secondLastIRBLong = data5.iloc[-3]['IRBLONG']
+            if lastIRBLong:
+                self.Trade.entry = data5.iloc[-2]['High']
+                self.Trade.orgStopLoss = self.Trade.trailingSL = data5.iloc[-2]['Low']
+                self.Trade.buySell = 'BUY'
+            elif secondLastIRBLong:
+                self.Trade.entry = data5.iloc[-3]['High']
+                self.Trade.orgStopLoss = self.Trade.trailingSL = data5.iloc[-3]['Low']
+                self.Trade.buySell = 'BUY'
+
+        if 'sell' in last_result:
+            lastIRBShort = data5.iloc[-2]['IRBSHORT']
+            secondLastIRBShort = data5.iloc[-3]['IRBSHORT']
+            if lastIRBShort:
+                self.Trade.entry = data5.iloc[-2]['Low']
+                self.Trade.orgStopLoss = self.Trade.trailingSL = data5.iloc[-2]['High']
+                self.Trade.buySell = 'SELL'
+            elif secondLastIRBShort:
+                self.Trade.entry = data5.iloc[-3]['Low']
+                self.Trade.orgStopLoss = self.Trade.trailingSL = data5.iloc[-3]['High']
+                self.Trade.buySell = 'SELL'
 
     # this function will decide the target point
     def setTarget(self):
