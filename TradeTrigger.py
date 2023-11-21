@@ -343,7 +343,7 @@ class TradeTrigger:
         # taking reference of rr13 for calculation
 
         self.trailISL(min1Close)
-        if self.Trade.iSLStatus is not 'Not set':
+        if self.Trade.iSLStatus != 'Not set':
             self.trailStopLoss()
 
     def trailISL(self, min1Close):
