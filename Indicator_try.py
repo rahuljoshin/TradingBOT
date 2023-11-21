@@ -3,14 +3,15 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-#from Indicator import Indicator
-#ind = Indicator()
-#ind.todayOHLC()
+from Indicator import Indicator
+ind = Indicator()
+ind.calculatePivotLevels()
 
+'''
 from TradeTrigger import TradeTrigger
 trade = TradeTrigger()
 trade.recordTrade()
-'''
+
 # Fetch data for a particular ticker
 ticker = 'NIFTY BANK'
 # data = yf.download(ticker, period='1mo', interval='1d')

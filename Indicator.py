@@ -331,8 +331,8 @@ class Indicator:
 
     def setFibPivotPoints(self):
         self.pivot = round((self.phigh + self.plow + self.pclose) / 3, 2)
-        self.bCPR = round((self.phigh + self.plow) / 2, 2)
-        self.TCPR = round(self.pivot + (self.pivot - self.bCPR), 2)
+        self.BCPR = round((self.phigh + self.plow) / 2, 2)
+        self.TCPR = round(self.pivot + (self.pivot - self.BCPR), 2)
         self.s1 = round(self.pivot - (0.382 * (self.phigh - self.plow)), 2)
         self.s2 = round(self.pivot - (0.618 * (self.phigh - self.plow)), 2)
         self.s3 = round(self.pivot - (1.0 * (self.phigh - self.plow)), 2)
