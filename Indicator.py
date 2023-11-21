@@ -80,8 +80,6 @@ class Indicator:
 
             self.getTopPriceVolumesforDay()
 
-            #self.tradeTrigger.execute(self)
-
         self.saveCSVs()
 
     def saveCSVs(self):
@@ -244,7 +242,9 @@ class Indicator:
                     volume_profile[j] += volumes[i]
                     break
 
-        return price_levels, volume_profile
+        rounded_price_levels = np.round(price_levels, decimals=2)
+
+        return rounded_price_levels, volume_profile
 
     def getTopPriceVolumesforDay(self):
         time5 = '5m'
@@ -290,13 +290,10 @@ class Indicator:
 
             self.setFibPivotPoints()
 
-            my_tuple = (
-                '\nTCPR:', self.TCPR, 'PIVOT:', self.pivot, 'BCPR:', self.BCPR, '\nS1:', self.s1, 'S2:', self.s2, 'S3:',
-                self.s3, '\nR1:', self.r1, 'R2:', self.r2, 'R3:', self.r3, '\nPHigh', self.phigh, 'PLow', self.plow,
-                'PClose', self.pclose)
-
-            string_tuple = ' '.join([str(item) for item in my_tuple])
-            logger.info(string_tuple)
+            logger.info(f"TCPR: {self.TCPR} PIVOT: {self.pivot} BCPR: {self.BCPR}"
+                        f"\nS1: {self.s1} S2: {self.s2} S3: {self.s3}"
+                        f"\nR1: {self.r1} R2: {self.r2} R3: {self.r3}"
+                        f"\nPHigh: {self.phigh} PLow: {self.plow} PClose: {self.pclose}")
 
             logger.info("Calculating pivot done")
 
@@ -557,18 +554,6 @@ class Indicator:
 
     def findGoldVWAPBuySell(self, bndata):
 
-        '''bndata['GOLDBAR'] = (((bndata['High'] < bndata['GOLDUP']) &
-                              (bndata['High'] > bndata['GOLDLOW'])) |
-
-                             ((bndata['Low'] < bndata['GOLDUP']) &
-                              (bndata['Low'] > bndata['GOLDLOW'])) |
-
-                             ((bndata['Close'] < bndata['GOLDUP']) &
-                              (bndata['Close'] > bndata['GOLDLOW'])) &
-                             (bndata['IRBLONG'] | bndata['IRBSHORT'])
-
-                             )'''
-
         bndata['GOLDBAR'] = (
 
                 (((bndata['Low'] < bndata['GOLDUP']) &
@@ -677,8 +662,6 @@ class Indicator:
     def avg1(self, src, length, mult):
         atr = (src['high'] - src['low']).rolling(window=length).mean() * mult
 
-
-        #atr = lib.atr(src['high'], src['low'], src['close'], length=length).values * mult
         up = (src['high'] + src['low']) / 2 + atr
         dn = (src['high'] + src['low']) / 2 - atr
         upper, lower = 0.0, 0.0
@@ -727,22 +710,6 @@ class Indicator:
         spanB_mult = 6.0
         offset = 26
 
-        '''
-        #tenkan = self.avg(close, high, low, tenkan_len, tenkan_mult)
-        tenkan = self.findSuperVal(close, high, low, tenkan_len, tenkan_mult).values
-
-        # Calculate Kijun-sen
-        kijun = self.findSuperVal(close, high, low, kijun_len, kijun_mult).values
-        #kijun = self.avg(close, high, low, kijun_len, kijun_mult)
-
-        # Calculate Senkou Span A and Senkou Span B
-        senkouA = (kijun + tenkan) / 2
-        senkouB = self.findSuperVal(close, high, low, spanB_len, spanB_mult).values
-        #senkouB = self.avg(close, high, low, spanB_len, spanB_mult)
-
-        return tenkan, kijun, senkouA, senkouB
-        '''
-
         data = {'close': close, 'high': high, 'low': low}  # Replace with your actual data
         src = pd.DataFrame(data)
         tenkan = self.avg1(src, tenkan_len, tenkan_mult)
@@ -752,10 +719,16 @@ class Indicator:
         senkouB = self.avg1(src, spanB_len, spanB_mult)
         return tenkan, kijun, senkouA, senkouB
 
+        '''
+            tenkan = self.findSuperVal(close, high, low, tenkan_len, tenkan_mult).values
+            # Calculate Kijun-sen
+            kijun = self.findSuperVal(close, high, low, kijun_len, kijun_mult).values
 
+            # Calculate Senkou Span A and Senkou Span B
+            senkouA = (kijun + tenkan) / 2
+            senkouB = self.findSuperVal(close, high, low, spanB_len, spanB_mult).values
 
+            return tenkan, kijun, senkouA, senkouB
+        '''
 
-
-    # Assuming 'close', 'high', 'low', 'tenkan_len', 'tenkan_mult', 'kijun_len', 'kijun_mult', 'spanB_len', 'spanB_mult'
-    # are defined before calling the following lines
 

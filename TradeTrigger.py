@@ -3,6 +3,8 @@ from datetime import datetime
 from Util import logger
 import pandas as pd
 
+from Util import getISTTimeNow
+
 
 class Trade:
     startTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
@@ -14,6 +16,7 @@ class Trade:
     orgStopLoss = -1.0
     trailingSL = -1.0
     dynamicTarget = -1.0
+    triggerEntryPrice = -1.0
     Target1 = -1.0
     Target2 = -1.0
     Target3 = -1.0
@@ -35,6 +38,7 @@ class Trade:
         self.orgStopLoss = -1.0
         self.trailingSL = -1.0
         self.dynamicTarget = -1.0
+        self.triggerEntryPrice = -1.0
         self.Target1 = -1.0
         self.Target2 = -1.0
         self.Target3 = -1.0
@@ -45,7 +49,7 @@ class Trade:
 class TradeTrigger:
     Trade = Trade()
     TradeInd = Indicator()
-    columns = ['start', 'end', 'entry', 'exit', 'pnl', 'status', 'ON']
+    columns = ['start', 'end', 'entry', 'exit', 'pnl', 'status', 'ON', 'type']
 
     tradeBook = pd.DataFrame(columns=columns)
 
@@ -73,22 +77,21 @@ class TradeTrigger:
         self.isStopLossHit()
         self.isTargetHit()
         self.printTrade()
-        #self.recordTrade()
+
 
     def printTrade(self):
 
         if self.Trade.tradeOn:
-            logger.info(f"\nTrade ON")
+            logger.info(f"Trade ON")
         else:
-            logger.info(f"\nTrade OFF")
+            logger.info(f"Trade OFF")
 
-        logger.info(f"'\n'Trade start:' {self.Trade.startTime} 'Trade end:' {self.Trade.endTime} ")
-        logger.info(f"'\n'Type:' {self.Trade.buySell} 'Trade status:' {self.Trade.tradeStatus}")
-        logger.info(f"'\nEntry:' {self.Trade.entry} 'Exit:' {self.Trade.exit}")
-        logger.info(f"'\nPNL:' {self.Trade.pnl} 'Dynamic Target:' {self.Trade.dynamicTarget}")
-        logger.info(f"'\nOrgSL:' {self.Trade.orgStopLoss}, 'Trailing-SL:' {self.Trade.trailingSL}")
-        logger.info(
-            f"'\nTarget1:' {self.Trade.Target1} 'Target2:' {self.Trade.Target2} 'Target3:' {self.Trade.Target3}")
+        logger.info(f"Trade start: {self.Trade.startTime} Trade end: {self.Trade.endTime} ")
+        logger.info(f"Type: {self.Trade.buySell} Trade status: {self.Trade.tradeStatus}")
+        logger.info(f"Entry: {self.Trade.entry} Exit: {self.Trade.exit}")
+        logger.info(f"PNL: {self.Trade.pnl} Dynamic Target: {self.Trade.dynamicTarget}")
+        logger.info(f"OrgSL: {self.Trade.orgStopLoss} Trailing-SL: {self.Trade.trailingSL}")
+        logger.info(f"Target1: {self.Trade.Target1} Target2: {self.Trade.Target2} Target3: {self.Trade.Target3}")
 
     # this function will decide the entry point
     def setEntryAndSL(self):
@@ -270,17 +273,17 @@ class TradeTrigger:
             self.Trade.tradeOn = False
 
     def recordTrade(self):
-        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime, 'entry': self.Trade.entry,
-                    'exit': self.Trade.exit, 'pnl': self.Trade.pnl, 'status': self.Trade.tradeStatus, 'ON': self.Trade.tradeOn}
+        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime, 'entry': self.Trade.triggerEntryPrice,
+                    'exit': self.Trade.exit, 'pnl': self.Trade.pnl,
+                    'status': self.Trade.tradeStatus, 'ON': self.Trade.tradeOn, 'type': self.Trade.buySell}
         self.tradeBook.loc[len(self.tradeBook)] = new_row1
-
 
         logger.info("TradeBook Start")
         for index, record in self.tradeBook.iterrows():
-
             logger.info(
-                f"Trade#: {index} ON: {record['ON']} Status: {record['status']} Start Time: {record['start']} Entry Price: {record['entry']} "
-                f"Exit Price: {record['exit']} PNL: {record['pnl']} End Time:{record['end']}")
+                f"Trade#: {index} ON: {record['ON']} Status: {record['status']} Type: {record['type']} "
+                f"\nStart Time: {record['start']} End Time:{record['end']}"
+                f"\nEntry Price: {record['entry']} Exit Price: {record['exit']} PNL:{record['pnl']}")
 
         logger.info("TradeBook End")
 
@@ -289,8 +292,8 @@ class TradeTrigger:
     def handleTargetHit(self, close):
         self.Trade.exit = close
         self.Trade.tradeOn = True
-        self.Trade.endTime = datetime.now()
-        self.Trade.pnl += abs(self.Trade.exit - self.Trade.entry)
+        self.Trade.endTime = getISTTimeNow()
+        self.Trade.pnl += abs(self.Trade.exit - self.Trade.triggerEntryPrice)
 
         self.recordTrade()
 
@@ -320,25 +323,52 @@ class TradeTrigger:
             data5 = data5.reset_index()
 
             if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] > self.Trade.entry):
-                triggered = True
+                if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low']):
+                    triggered = True
 
             if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] < self.Trade.entry):
-                triggered = True
+                if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low']):
+                    triggered = True
 
             if triggered:
                 self.Trade.tradeOn = True
-                self.Trade.startTime = datetime.now()
+                self.Trade.triggerEntryPrice = data5.iloc[-2]['Close']
+                self.Trade.startTime = getISTTimeNow()
                 self.Trade.tradeStatus = 'Triggered'
 
         return triggered
 
+    def normalCandle(self, high, low):
+        stat = False
+        triggerCandleSpan = high-low
+        length = 50
+        entryCandleSpan = abs(self.Trade.entry-self.Trade.orgStopLoss)
+
+        if triggerCandleSpan < 2*entryCandleSpan and entryCandleSpan < length:
+            stat= True
+        else:
+            logger.info(f"EntryCandleSpan: {entryCandleSpan} Trigger span: {triggerCandleSpan} "
+                        f"\nRULE:Trigger candle span < {2*entryCandleSpan} and Entry candle span < {length} ")
+        return stat
+
     def handleSLHit(self, close, trailing=False):
         self.Trade.exit = close
+        self.Trade.endTime = getISTTimeNow()
         self.Trade.tradeOn = False
-        self.Trade.pnl = self.Trade.exit - self.Trade.entry
+        self.Trade.pnl = self.Trade.exit - self.Trade.triggerEntryPrice
+
+        if self.Trade.buySell == 'SELL':
+            self.Trade.pnl = self.Trade.triggerEntryPrice - self.Trade.exit
+
         self.Trade.tradeStatus = f"Original SL hit for {self.Trade.buySell}"
+
         if trailing:
             self.Trade.tradeStatus = f"Trailing SL hit for {self.Trade.buySell}"
+            self.Trade.pnl = abs(self.Trade.pnl)
+
+        self.Trade.pnl = round(self.Trade.pnl, 2)
+
+        self.recordTrade()
 
     # this function will decide if the stoploss/trailing stoploss is hit
     def isStopLossHit(self):
@@ -353,10 +383,12 @@ class TradeTrigger:
                 self.handleSLHit(data5.iloc[-2]['Close'])
 
             if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] < self.Trade.trailingSL):
-                self.handleSLHit(data5.iloc[-2]['Close'], trailing=True)
+                if self.Trade.trailingSL != self.Trade.orgStopLoss:
+                    self.handleSLHit(data5.iloc[-2]['Close'], trailing=True)
 
             if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] > self.Trade.trailingSL):
-                self.handleSLHit(data5.iloc[-2]['Close'], trailing=True)
+                if self.Trade.trailingSL != self.Trade.orgStopLoss:
+                    self.handleSLHit(data5.iloc[-2]['Close'], trailing=True)
 
     def runTrade(self):
         pass
