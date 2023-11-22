@@ -79,6 +79,7 @@ class TradeTrigger:
             self.setEntryAndSL()
             self.setTarget()
             self.isTradeTriggered()
+            self.printTrade()
 
         else:
             self.monitorTrade()
@@ -89,6 +90,8 @@ class TradeTrigger:
         self.printTrade()
 
     def printTrade(self):
+
+        logger.info(f"-------------------------------------")
 
         if self.Trade.tradeOn:
             logger.info(f"Trade ON")
@@ -101,6 +104,7 @@ class TradeTrigger:
         logger.info(f"PNL: {self.Trade.pnl} Pivot Dynamic Target: {self.Trade.pivotTarget}")
         logger.info(f"OrgSL: {self.Trade.orgStopLoss} Trailing-SL: {self.Trade.trailingSL} i-SL: {self.Trade.iSL}")
         logger.info(f"Target1: {self.Trade.Target1} Target2: {self.Trade.Target2} Target3: {self.Trade.Target3}")
+        logger.info(f"-------------------------------------")
 
     # this function will decide the entry point
 
@@ -111,28 +115,31 @@ class TradeTrigger:
         data5 = data5.reset_index()
 
         last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
+        lastIRBLong = data5.iloc[-2]['IRBLONG']
+        lastIRBShort = data5.iloc[-2]['IRBSHORT']
+
+        secondLastIRBLong = data5.iloc[-3]['IRBLONG']
+        secondLastIRBShort = data5.iloc[-3]['IRBSHORT']
 
         last_result = last_result.lower()
         if 'buy' in last_result:
-            lastIRBLong = data5.iloc[-2]['IRBLONG']
-            secondLastIRBLong = data5.iloc[-3]['IRBLONG']
-            if lastIRBLong:
+            if lastIRBLong or lastIRBShort:
                 self.Trade.entry = data5.iloc[-2]['High']
                 self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-2]['Low']
                 self.Trade.buySell = 'BUY'
-            elif secondLastIRBLong:
+            elif secondLastIRBLong or secondLastIRBShort:
                 self.Trade.entry = data5.iloc[-3]['High']
                 self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-3]['Low']
                 self.Trade.buySell = 'BUY'
 
         if 'sell' in last_result:
-            lastIRBShort = data5.iloc[-2]['IRBSHORT']
-            secondLastIRBShort = data5.iloc[-3]['IRBSHORT']
-            if lastIRBShort:
+
+            if lastIRBLong or lastIRBShort:
                 self.Trade.entry = data5.iloc[-2]['Low']
                 self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-2]['High']
                 self.Trade.buySell = 'SELL'
-            elif secondLastIRBShort:
+
+            elif secondLastIRBLong or secondLastIRBShort:
                 self.Trade.entry = data5.iloc[-3]['Low']
                 self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-3]['High']
                 self.Trade.buySell = 'SELL'
