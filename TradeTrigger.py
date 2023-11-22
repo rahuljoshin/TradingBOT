@@ -98,12 +98,12 @@ class TradeTrigger:
         else:
             logger.info(f"Trade OFF")
 
-        logger.info(f"Trade start: {self.Trade.startTime} Trade end: {self.Trade.endTime} ")
-        logger.info(f"Type: {self.Trade.buySell} Trade status: {self.Trade.tradeStatus} iSL status: {self.Trade.iSLStatus}")
-        logger.info(f"Entry: {self.Trade.entry} Exit: {self.Trade.exit}")
-        logger.info(f"PNL: {self.Trade.pnl} Pivot Dynamic Target: {self.Trade.pivotTarget}")
-        logger.info(f"OrgSL: {self.Trade.orgStopLoss} Trailing-SL: {self.Trade.trailingSL} i-SL: {self.Trade.iSL}")
-        logger.info(f"Target1: {self.Trade.Target1} Target2: {self.Trade.Target2} Target3: {self.Trade.Target3}")
+        logger.info(f"Trade start: {self.Trade.startTime}, Trade end: {self.Trade.endTime} ")
+        logger.info(f"Type: {self.Trade.buySell}, Trade status: {self.Trade.tradeStatus}, iSL status: {self.Trade.iSLStatus}")
+        logger.info(f"Entry: {self.Trade.entry}, Exit: {self.Trade.exit}")
+        logger.info(f"PNL: {self.Trade.pnl}, Pivot Dynamic Target: {self.Trade.pivotTarget}")
+        logger.info(f"OrgSL: {self.Trade.orgStopLoss}, Trailing-SL: {self.Trade.trailingSL} i-SL: {self.Trade.iSL}")
+        logger.info(f"Target1: {self.Trade.Target1}, Target2: {self.Trade.Target2}, Target3: {self.Trade.Target3}")
         logger.info(f"-------------------------------------")
 
     # this function will decide the entry point
@@ -385,8 +385,6 @@ class TradeTrigger:
                 self.Trade.iSL = self.Trade.rr13
                 self.Trade.iSLStatus = 'Moved to R13 ensure 1:3'
 
-
-
     def isTradeTriggered(self):
         # here we will check if the trade is triggered based on the entry criteria
         # Check that 5 min close is above high for buy and 5 min close below low for sell
@@ -395,13 +393,12 @@ class TradeTrigger:
             time5 = '5m'
             data5 = self.TradeInd.newSignalData[time5].data
             data5 = data5.reset_index()
+            if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low']):
 
-            if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] > self.Trade.entry):
-                if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low']):
+                if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] > self.Trade.entry):
                     triggered = True
 
             if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] < self.Trade.entry):
-                if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low']):
                     triggered = True
 
             if triggered:

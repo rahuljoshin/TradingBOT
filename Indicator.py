@@ -16,8 +16,8 @@ from collections import namedtuple
 
 from Util import logger
 
-
 from Util import getISTTimeNow
+
 
 # from Derivatives import NSE
 
@@ -25,7 +25,7 @@ from Util import getISTTimeNow
 class Indicator:
     Signal = namedtuple('Signal', ['data', 'is_dirty'])
 
-    #tradeTrigger = TradeTrigger()
+    # tradeTrigger = TradeTrigger()
 
     # All the data for timeframes
     newSignalData = {
@@ -39,8 +39,6 @@ class Indicator:
     TCPR = pivot = BCPR = s1 = s2 = s3 = r1 = r2 = r3 = phigh = plow = pclose = 0.0
 
     tOpen = tHigh = tLow = tClose = 0.0
-
-
 
     # Top 3 price and volumes
     top_vol_records = []
@@ -70,7 +68,7 @@ class Indicator:
         # self.derNse = NSE()
         # result data based on 5,30 mins data
         self.rData = pd.DataFrame()
-        #tradeTrigger = TradeTrigger()
+        # tradeTrigger = TradeTrigger()
 
     def execute(self):
         self.calculatePivotLevels()
@@ -78,7 +76,7 @@ class Indicator:
         if self.allSignals():
             self.buyorSell()
 
-            self.getTopPriceVolumesforDay()
+            #self.getTopPriceVolumesforDay()
 
         self.saveCSVs()
 
@@ -172,6 +170,10 @@ class Indicator:
         s2Bar = data5.iloc[-2]['S2']
         s3Bar = data5.iloc[-2]['S3']
 
+        top1VolBar = data5.iloc[-2]['TOP1VOL']
+        top2VolBar = data5.iloc[-2]['TOP2VOL']
+        top3VolBar = data5.iloc[-2]['TOP3VOL']
+
         if buy30min and buy5min:
             result = 'BESTBUY'
         elif sell30min and sell5min:
@@ -214,6 +216,13 @@ class Indicator:
         if pHighBar:
             result = f"{result} {'$$$5MIN-Previous HighBAR $$$'}"
 
+        if top1VolBar:
+            result = f"{result} $$$Touching TOP1-{self.top_vol_records[0][0]}$$$"
+        if top2VolBar:
+            result = f"{result} $$$Touching TOP2-{self.top_vol_records[1][0]}$$$"
+        if top3VolBar:
+            result = f"{result} $$$Touching TOP3-{self.top_vol_records[2][0]}$$$"
+
         last_result = self.rData.iloc[-1]['result'] if len(self.rData) else ''
 
         if result != last_result:
@@ -246,7 +255,7 @@ class Indicator:
 
         return rounded_price_levels, volume_profile
 
-    def getTopPriceVolumesforDay(self):
+    def getTopPriceVolumesforDay(self, count=3):
         time5 = '5m'
 
         bank = BankniftyCls()
@@ -394,9 +403,6 @@ class Indicator:
         else:
             stat = True
 
-            # current_time = current_time.strftime('%Y-%m-%d %H:%M')
-            # index_time = index.strftime('%Y-%m-%d %H:%M')
-
         return stat
 
     def isWorkingHours(self):
@@ -439,8 +445,8 @@ class Indicator:
         bndata['VWMA21_RSI'] = self.vwma(bndata['RSI9'], bndata['Volume'], period=21)
 
         stoch = lib.momentum.StochasticOscillator(high=bndata['High'], low=bndata['Low'], close=bndata['Close'],
-                                                 window=4,
-                                                 smooth_window=1)
+                                                  window=4,
+                                                  smooth_window=1)
         bndata['%K'] = stoch.stoch()
         bndata['%D'] = stoch.stoch_signal()
 
@@ -479,6 +485,7 @@ class Indicator:
 
         if interval == '5m' or interval == '15m':
             self.touchingIMPLevels(bndata)
+            self.inTopVolumeZone(bndata)
 
         # bndata = bndata.fillna(-1)
 
@@ -494,6 +501,21 @@ class Indicator:
 
         bndata = bndata.round(2)
         return bndata
+
+    def inTopVolumeZone(self, bnData):
+        self.getTopPriceVolumesforDay()
+
+        #Check if the candle is crossing the top 3 volume price
+        for i in range(len(self.top_vol_records)):
+            item = self.top_vol_records[i]
+            volPrice = item[0]
+            column = f"TOP{i + 1}VOL"
+
+            bnData[column] = (
+                ((bnData['High'] > volPrice) & (bnData['Low'] < volPrice)
+                 &
+                 (bnData['IRBLONG'] | bnData['IRBSHORT'])
+                 ))
 
     def touchingIMPLevels(self, bnData):
 
@@ -557,14 +579,14 @@ class Indicator:
         bndata['GOLDBAR'] = (
 
                 (((bndata['Low'] < bndata['GOLDUP']) &
-                  (bndata['GOLDUP']< bndata['High'])) & (bndata['IRBLONG'] | bndata['IRBSHORT']))|
+                  (bndata['GOLDUP'] < bndata['High'])) & (bndata['IRBLONG'] | bndata['IRBSHORT'])) |
                 (((bndata['Low'] < bndata['GOLD']) &
-                               (bndata['GOLD'] < bndata['High'])) &(bndata['IRBLONG'] | bndata['IRBSHORT'])) |
+                  (bndata['GOLD'] < bndata['High'])) & (bndata['IRBLONG'] | bndata['IRBSHORT'])) |
                 (((bndata['Low'] < bndata['GOLDLOW']) &
-                                (bndata['GOLDLOW']< bndata['High'])) &
+                  (bndata['GOLDLOW'] < bndata['High'])) &
                  ((bndata['IRBLONG'] | bndata['IRBSHORT']))))
 
-        bndata['VWAPBAR'] = ( ((bndata['Low'] < bndata['VWAP']) & (bndata['VWAP'] < bndata['High']) )
+        bndata['VWAPBAR'] = (((bndata['Low'] < bndata['VWAP']) & (bndata['VWAP'] < bndata['High']))
                              &
                              (bndata['IRBLONG'] | bndata['IRBSHORT'])
                              )
@@ -612,7 +634,6 @@ class Indicator:
         BBLowerBand = sma20 - stdev * std_dev
 
         return BBUpperBand, BBLowerBand
-
 
     def findSuperVal(self, close, high, low, length, mult):
         atr = (high - low).rolling(window=length).mean() * mult
@@ -730,5 +751,3 @@ class Indicator:
 
             return tenkan, kijun, senkouA, senkouB
         '''
-
-

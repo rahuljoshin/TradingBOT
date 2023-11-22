@@ -2,12 +2,12 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
+'''
 from Indicator import Indicator
 ind = Indicator()
-ind.calculatePivotLevels()
+ind.inTopVolumeZone()
 
-'''
+
 from TradeTrigger import TradeTrigger
 trade = TradeTrigger()
 trade.recordTrade()
@@ -228,8 +228,11 @@ plt.show()
 from Banknifty import BankniftyCls
 from Indicator import Indicator
 algo = Indicator()
-records = algo.getSignals()
-records.to_csv('record.csv', header=True, index=True)
+bank = BankniftyCls()
+
+algo.getSignals()
+#records = algo.getSignals(data)
+#records.to_csv('record.csv', header=True, index=True)
 '''
 bank = BankniftyCls()
 data = bank.get_BNData()

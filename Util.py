@@ -27,7 +27,7 @@ file_handler.setLevel(logging.DEBUG)
 
 # Create a console handler
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
+console_handler.setLevel(logging.DEBUG)
 
 # Create a logging format
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -41,26 +41,3 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 
-'''
-# Create a logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-# Create a file handler
-handler = logging.FileHandler('logfile.log')
-handler.setLevel(logging.INFO)
-
-# Get the current time in IST
-ist = pytz.timezone('Asia/Kolkata')
-ist_time = datetime.now(ist)
-
-# Create a logging format with IST time
-formatter = logging.Formatter(f'%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S %Z%z')
-handler.setFormatter(formatter)
-
-# This sets the time of the logger to IST
-#logging.Formatter.converter = lambda *args: datetime.now(tz=pytz.timezone('Asia/Kolkata'))
-
-# Add the handlers to the logger
-logger.addHandler(handler)
-'''
