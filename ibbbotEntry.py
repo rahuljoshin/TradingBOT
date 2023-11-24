@@ -22,6 +22,7 @@ def continueExecution():
     if terminate_event.is_set():
         bot.sendMessage("Final TERMINATED")
         return False
+    return True
 
 
 def executeRun():
