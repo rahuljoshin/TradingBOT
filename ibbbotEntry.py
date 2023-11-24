@@ -16,11 +16,18 @@ ind = Indicator()
 tradeTrigger = TradeTrigger()
 
 
-def executeRun():
+def continueExecution():
     checkExe()
     bot = TemBot()
     if terminate_event.is_set():
-        bot.sendMessage("TERMINATED")
+        bot.sendMessage("Final TERMINATED")
+        return False
+
+
+def executeRun():
+    bot = TemBot()
+    if terminate_event.is_set():
+        bot.sendMessage("Excute TERMINATED")
         return False
 
     try:
