@@ -1,4 +1,5 @@
 import threading
+import traceback
 
 stop_event = threading.Event()
 restart_event = threading.Event()
@@ -44,10 +45,10 @@ def executeRun():
             logger.info("STOPPED")
             bot.sendMessage("STOPPED")
 
-
-
     except Exception as e:
         message = f"An error occurred: {e}"
+
+        traceback.print_exc()
         logger.error(message)
         bot.sendMessage(message)
 

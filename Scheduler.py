@@ -9,9 +9,14 @@ import sys
 
 sys.setrecursionlimit(5000)  # Set the recursion limit to a higher value
 
-#executeRun()
+# executeRun()
+run = [True]
+
+
 def job():
-    executeRun()
+
+    if run[0]:
+        run[0] = executeRun()
 
 
 # Schedule the job to run every 30 seconds
