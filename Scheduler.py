@@ -15,7 +15,9 @@ run = [True]
 
 
 def job():
-    if not continueExecution() or run[0] is False:
+    if run[0] is False:
+        return False
+    if run[0] is False or not continueExecution():
         run[0] = False
         return False
     else:
