@@ -32,6 +32,6 @@ schedule.every(60).seconds.do(job)
 # Add any other scheduled jobs here
 
 # Keep the program running to continue the scheduled jobs
-while run[0] is True or not ibb.terminate_event.is_set():
+while run[0] is True and not ibb.terminate_event.is_set():
     schedule.run_pending()
     time.sleep(60)
