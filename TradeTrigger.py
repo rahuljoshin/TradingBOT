@@ -4,6 +4,7 @@ from Util import logger
 import pandas as pd
 
 from Util import getISTTimeNow
+from TelgramCom import TemBot
 
 
 class Trade:
@@ -59,9 +60,11 @@ class Trade:
 class TradeTrigger:
     Trade = Trade()
     TradeInd = Indicator()
-    columns = ['start', 'end', 'entry', 'exit', 'pnl', 'status', 'ON', 'type', 'iSLStatus']
+    columns = ['start', 'end', 'trigger', 'exit', 'pnl', 'status', 'ON', 'type',
+               'iSLStatus', 'entry', 'orgSL', 'trailingSL', 'iSL', 'T1', 'T2', 'T3']
 
     tradeBook = pd.DataFrame(columns=columns)
+    bot = TemBot()
 
     def __init__(self):
 
@@ -91,24 +94,63 @@ class TradeTrigger:
 
     def printTrade(self):
 
-        logger.info(f"-------------------------------------")
+        message = "-------------------------------------"
 
-        if self.Trade.tradeOn:
-            logger.info(f"Trade ON")
-        else:
-            logger.info(f"Trade OFF")
+        message = f"{message}\n Trade On: {self.Trade.tradeOn}"
 
-        logger.info(f"Trade start: {self.Trade.startTime}, Trade end: {self.Trade.endTime} ")
-        logger.info(f"Type: {self.Trade.buySell}, Trade status: {self.Trade.tradeStatus}, iSL status: {self.Trade.iSLStatus}")
-        logger.info(f"Entry: {self.Trade.entry}, Exit: {self.Trade.exit}")
-        logger.info(f"PNL: {self.Trade.pnl}, Pivot Dynamic Target: {self.Trade.pivotTarget}")
-        logger.info(f"OrgSL: {self.Trade.orgStopLoss}, Trailing-SL: {self.Trade.trailingSL} i-SL: {self.Trade.iSL}")
-        logger.info(f"Target1: {self.Trade.Target1}, Target2: {self.Trade.Target2}, Target3: {self.Trade.Target3}")
-        logger.info(f"-------------------------------------")
+        message = f"{message}\n Trade start: {self.Trade.startTime}, Trade end: {self.Trade.endTime}"
+        message = f"{message}\n Trigger Price: {self.Trade.triggerEntryPrice}, Exit: {self.Trade.exit} PNL: {self.Trade.pnl}"
+        message = f"{message}\n Type: {self.Trade.buySell}, Trade status: {self.Trade.tradeStatus}, iSL status: {self.Trade.iSLStatus}"
+        message = f"{message}\n Entry: {self.Trade.entry}, Pivot Dynamic Target: {self.Trade.pivotTarget}"
+
+        message = f"{message}\n OrgSL: {self.Trade.orgStopLoss}, Trailing-SL: {self.Trade.trailingSL} i-SL: {self.Trade.iSL}"
+        message = f"{message}\n Target1: {self.Trade.Target1}, Target2: {self.Trade.Target2}, Target3: {self.Trade.Target3}"
+        message = f"{message}\n-------------------------------------"
+
+        logger.info(message)
+        self.bot.sendMessage(message)
+
+    def recordTrade(self):
+        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime,
+                    'trigger': self.Trade.triggerEntryPrice,
+                    'exit': self.Trade.exit, 'pnl': self.Trade.pnl,
+                    'status': self.Trade.tradeStatus, 'ON': self.Trade.tradeOn, 'type': self.Trade.buySell,
+                    'iSLStatus': self.Trade.iSLStatus, 'entry': self.Trade.entry, 'orgSL': self.Trade.orgStopLoss,
+                    'trailingSL': self.Trade.trailingSL, 'iSL': self.Trade.iSL, 'T1': self.Trade.Target1,
+                    'T2': self.Trade.Target2, 'T3': self.Trade.Target3}
+        self.tradeBook.loc[len(self.tradeBook)] = new_row1
+
+        logger.info("TradeBook Start")
+        for index, record in self.tradeBook.iterrows():
+            logger.info(
+                f"Trade#: {index}\n ON: {record['ON']} Status: {record['status']} iSL Status: {record['iSLStatus']} Type: {record['type']} "
+                f"\nStart Time: {record['start']} End Time:{record['end']}"
+                f"\nEntry Price: {record['trigger']} Exit Price: {record['exit']} PNL:{record['pnl']}"
+                f"\nEntry Price: {record['entry']} ORG SL: {record['orgSL']} Trailing SL:{record['trailingSL']} iSL:{record['iSL']}"
+                f"\nT1: {record['T1']} T2: {record['T2']} T3:{record['T3']}")
+
+        logger.info("TradeBook End")
+
+        self.tradeBook.to_csv('tradebook.csv', header=True, index=True)
 
     # this function will decide the entry point
 
     def setEntryAndSL(self):
+        # get last candle for the 5 min with IRB buy or sell
+        time5 = '5m'
+        data5 = self.TradeInd.newSignalData[time5].data
+        data5 = data5.reset_index()
+        last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
+
+        last_result = last_result.lower()
+        if 'buy' in last_result:
+            self.setBuyTrade()
+
+        if 'sell' in last_result:
+            self.setSellTrade()
+
+
+    def setBuyTrade(self):
         # get last candle for the 5 min with IRB buy or sell
         time5 = '5m'
         data5 = self.TradeInd.newSignalData[time5].data
@@ -121,28 +163,54 @@ class TradeTrigger:
         secondLastIRBLong = data5.iloc[-3]['IRBLONG']
         secondLastIRBShort = data5.iloc[-3]['IRBSHORT']
 
-        last_result = last_result.lower()
-        if 'buy' in last_result:
-            if lastIRBLong or lastIRBShort:
-                self.Trade.entry = data5.iloc[-2]['High']
-                self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-2]['Low']
-                self.Trade.buySell = 'BUY'
-            elif secondLastIRBLong or secondLastIRBShort:
-                self.Trade.entry = data5.iloc[-3]['High']
-                self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-3]['Low']
-                self.Trade.buySell = 'BUY'
+        if lastIRBLong or lastIRBShort:
+            self.Trade.entry = data5.iloc[-2]['High']
+            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-2]['Low']
+            self.Trade.buySell = 'BUY'
 
-        if 'sell' in last_result:
+        elif secondLastIRBLong or secondLastIRBShort:
+            self.Trade.entry = data5.iloc[-3]['High']
+            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-3]['Low']
+            self.Trade.buySell = 'BUY'
 
-            if lastIRBLong or lastIRBShort:
-                self.Trade.entry = data5.iloc[-2]['Low']
-                self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-2]['High']
-                self.Trade.buySell = 'SELL'
+        if lastIRBLong and secondLastIRBLong:
+            minHigh = min(data5.iloc[-2]['High'], data5.iloc[-3]['High'])
+            minLow = min(data5.iloc[-2]['Low'], data5.iloc[-3]['Low'])
 
-            elif secondLastIRBLong or secondLastIRBShort:
-                self.Trade.entry = data5.iloc[-3]['Low']
-                self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-3]['High']
-                self.Trade.buySell = 'SELL'
+            self.Trade.entry = minHigh
+            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = minLow
+            self.Trade.buySell = 'BUY'
+
+    def setSellTrade(self):
+        # get last candle for the 5 min with IRB buy or sell
+        time5 = '5m'
+        data5 = self.TradeInd.newSignalData[time5].data
+        data5 = data5.reset_index()
+
+        last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
+        lastIRBLong = data5.iloc[-2]['IRBLONG']
+        lastIRBShort = data5.iloc[-2]['IRBSHORT']
+
+        secondLastIRBLong = data5.iloc[-3]['IRBLONG']
+        secondLastIRBShort = data5.iloc[-3]['IRBSHORT']
+
+        if lastIRBLong or lastIRBShort:
+            self.Trade.entry = data5.iloc[-2]['Low']
+            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-2]['High']
+            self.Trade.buySell = 'SELL'
+
+        elif secondLastIRBLong or secondLastIRBShort:
+            self.Trade.entry = data5.iloc[-3]['Low']
+            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-3]['High']
+            self.Trade.buySell = 'SELL'
+
+        if lastIRBShort and secondLastIRBShort:
+            maxLow = max(data5.iloc[-2]['Low'], data5.iloc[-3]['Low'])
+            maxHigh = max(data5.iloc[-2]['Low'], data5.iloc[-3]['Low'])
+
+            self.Trade.entry = maxLow
+            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = maxHigh
+            self.Trade.buySell = 'SELL'
 
     # this function will decide the target point
     def setTarget(self):
@@ -298,24 +366,6 @@ class TradeTrigger:
             self.Trade.tradeStatus = f"Target3 hit for {self.Trade.buySell}"
             self.Trade.tradeOn = False
 
-    def recordTrade(self):
-        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime, 'entry': self.Trade.triggerEntryPrice,
-                    'exit': self.Trade.exit, 'pnl': self.Trade.pnl,
-                    'status': self.Trade.tradeStatus, 'ON': self.Trade.tradeOn, 'type': self.Trade.buySell,
-                    'iSLStatus':self.Trade.iSLStatus}
-        self.tradeBook.loc[len(self.tradeBook)] = new_row1
-
-        logger.info("TradeBook Start")
-        for index, record in self.tradeBook.iterrows():
-            logger.info(
-                f"Trade#: {index} ON: {record['ON']} Status: {record['status']} iSL Status: {record['iSLStatus']} Type: {record['type']} "
-                f"\nStart Time: {record['start']} End Time:{record['end']}"
-                f"\nEntry Price: {record['entry']} Exit Price: {record['exit']} PNL:{record['pnl']}")
-
-        logger.info("TradeBook End")
-
-        self.tradeBook.to_csv('tradebook.csv', header=True, index=True)
-
     def handleTargetHit(self, close):
         self.Trade.exit = close
         self.Trade.tradeOn = True
@@ -465,10 +515,12 @@ class TradeTrigger:
                     self.handleSLHit(data5.iloc[-2]['Close'], trailing=True)
 
             if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] < self.Trade.iSL):
-                self.handleSLHit(data5.iloc[-2]['Close'], iSL=True)
+                if self.Trade.iSL != self.Trade.orgStopLoss:
+                    self.handleSLHit(data5.iloc[-2]['Close'], iSL=True)
 
             if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] > self.Trade.iSL):
-                self.handleSLHit(data5.iloc[-2]['Close'], iSL=True)
+                if self.Trade.iSL != self.Trade.orgStopLoss:
+                    self.handleSLHit(data5.iloc[-2]['Close'], iSL=True)
 
     def runTrade(self):
         pass
