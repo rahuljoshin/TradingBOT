@@ -18,10 +18,12 @@ tradeTrigger = TradeTrigger()
 
 def continueExecution():
     checkExe()
-    bot = TemBot()
+
     if terminate_event.is_set():
+        bot = TemBot()
         bot.sendMessage("Final TERMINATED")
         return False
+
     return True
 
 
