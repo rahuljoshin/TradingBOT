@@ -248,7 +248,7 @@ class Indicator:
         for i in range(len(prices)):
             for j in range(num_levels - 1):
                 if price_levels[j] <= prices[i] < price_levels[j + 1]:
-                    volume_profile[j] += volumes[i]
+                    volume_profile[j] += volumes.iloc[i]
                     break
 
         rounded_price_levels = np.round(price_levels, decimals=2)
