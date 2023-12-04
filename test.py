@@ -264,3 +264,22 @@ plt.show()
 print(f"The trend angle for the data points is: {trend_angle_degrees} degrees")
 
 '''
+
+import math
+
+number1 = 455.65
+number2 = 455.15
+
+# Round up
+rounded_up1 = math.ceil(number1)
+rounded_up2 = math.ceil(number2)
+
+# Round down
+rounded_down1 = math.floor(number1)
+rounded_down2 = math.floor(number2)
+
+print(f"Original number1: {number1}")
+print(f"Rounded up1: {rounded_up1}")
+
+print(f"\nOriginal number2: {number2}")
+print(f"Rounded down2: {rounded_down2}")

@@ -536,6 +536,7 @@ plt.ylabel('TTM Squeeze Value')
 plt.show()
 '''
 
+'''
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -626,4 +627,57 @@ data['TTMSQ'] = (data['UpperBand'] < data['kUpperBand']) & (data['LowerBand'] > 
 
 
 data.to_csv('11.csv', header=True, index=True)
+'''
 
+from Indicator import Indicator
+
+def getPreviousIRB(sameDay=True, lookBack=60):
+    ind = Indicator()
+    data5 = ind.getSignals()
+    low = data5.iloc[-2]['Low']
+    high = data5.iloc[-2]['High']
+
+    if sameDay:
+
+        data5.index = pd.to_datetime(data5.index)
+        # criteria = data5.index.strftime('%Y-%m-%d')
+
+        # criteria = data5.index.strftime('%Y-%m-%d')
+
+        # data5.index = data5.index.strftime('%Y-%m-%d')
+
+        # Find the index of the row with the latest date
+        latest_date = data5.index[-1].date()
+        # latestDate = datetime.strptime(latest_date, "%Y-%m-%d")
+        # latest_date_index = latestDate.strftime('%Y-%m-%d')
+
+        # Convert the target date string to a datetime object
+        # target_date = pd.to_datetime(latestDate)
+
+        # Filter the DataFrame based on the target date
+        latest_date_records = data5[data5.index.date == latest_date]
+
+        # Extract the records with the latest date
+        # latest_date_records = data5.loc[latest_date_index]
+
+        length = len(latest_date_records)
+        count = 1
+
+        for i in range(length - 2, -1, -1):
+            if count < lookBack:
+                row = latest_date_records.iloc[i]
+                irbLong = row['IRBLONG']
+                irbShort = row['IRBSHORT']
+
+                if irbLong or irbShort:
+                    high = row['High']
+                    low = row['Low']
+                    break
+                count += 1
+
+        # data5.index = data5.index.strftime('%Y-%m-%d %H:%M:%S')
+
+    return high, low
+
+high, low = getPreviousIRB()
+print(high, low)

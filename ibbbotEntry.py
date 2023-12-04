@@ -8,12 +8,16 @@ terminate_event = threading.Event()
 from TradeTrigger import TradeTrigger
 from Indicator import Indicator
 
+from OptionTrader import OptionTrader
+
 from TelgramCom import TemBot
 from Util import getISTTimeNow
 from Util import logger
 
 ind = Indicator()
 tradeTrigger = TradeTrigger()
+
+optionTrader = OptionTrader()
 
 
 def continueExecution():
@@ -47,6 +51,7 @@ def executeRun():
 
             ind.execute()
             tradeTrigger.execute(ind)
+            optionTrader.execute(tradeTrigger)
             current_time = getISTTimeNow()
             msg = f"Execute SUCCESS at {current_time}"
             logger.info(msg)

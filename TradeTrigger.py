@@ -149,68 +149,22 @@ class TradeTrigger:
         if 'sell' in last_result:
             self.setSellTrade()
 
-
     def setBuyTrade(self):
         # get last candle for the 5 min with IRB buy or sell
-        time5 = '5m'
-        data5 = self.TradeInd.newSignalData[time5].data
-        data5 = data5.reset_index()
+        self.Trade.buySell = 'BUY'
+        high, low = self.getPreviousIRB(lookBack=2)
 
-        last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
-        lastIRBLong = data5.iloc[-2]['IRBLONG']
-        lastIRBShort = data5.iloc[-2]['IRBSHORT']
-
-        secondLastIRBLong = data5.iloc[-3]['IRBLONG']
-        secondLastIRBShort = data5.iloc[-3]['IRBSHORT']
-
-        if lastIRBLong or lastIRBShort:
-            self.Trade.entry = data5.iloc[-2]['High']
-            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-2]['Low']
-            self.Trade.buySell = 'BUY'
-
-        elif secondLastIRBLong or secondLastIRBShort:
-            self.Trade.entry = data5.iloc[-3]['High']
-            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-3]['Low']
-            self.Trade.buySell = 'BUY'
-
-        if lastIRBLong and secondLastIRBLong:
-            minHigh = min(data5.iloc[-2]['High'], data5.iloc[-3]['High'])
-            minLow = min(data5.iloc[-2]['Low'], data5.iloc[-3]['Low'])
-
-            self.Trade.entry = minHigh
-            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = minLow
-            self.Trade.buySell = 'BUY'
+        if high != 0:
+            self.Trade.entry = high
+            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = round(low)
 
     def setSellTrade(self):
         # get last candle for the 5 min with IRB buy or sell
-        time5 = '5m'
-        data5 = self.TradeInd.newSignalData[time5].data
-        data5 = data5.reset_index()
-
-        last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
-        lastIRBLong = data5.iloc[-2]['IRBLONG']
-        lastIRBShort = data5.iloc[-2]['IRBSHORT']
-
-        secondLastIRBLong = data5.iloc[-3]['IRBLONG']
-        secondLastIRBShort = data5.iloc[-3]['IRBSHORT']
-
-        if lastIRBLong or lastIRBShort:
-            self.Trade.entry = data5.iloc[-2]['Low']
-            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-2]['High']
-            self.Trade.buySell = 'SELL'
-
-        elif secondLastIRBLong or secondLastIRBShort:
-            self.Trade.entry = data5.iloc[-3]['Low']
-            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = data5.iloc[-3]['High']
-            self.Trade.buySell = 'SELL'
-
-        if lastIRBShort and secondLastIRBShort:
-            maxLow = max(data5.iloc[-2]['Low'], data5.iloc[-3]['Low'])
-            maxHigh = max(data5.iloc[-2]['Low'], data5.iloc[-3]['Low'])
-
-            self.Trade.entry = maxLow
-            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = maxHigh
-            self.Trade.buySell = 'SELL'
+        self.Trade.buySell = 'SELL'
+        high, low = self.getPreviousIRB(lookBack=2)
+        if high != 0:
+            self.Trade.entry = low
+            self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = round(high)
 
     # this function will decide the target point
     def setTarget(self):
@@ -222,113 +176,160 @@ class TradeTrigger:
 
         close = data5.iloc[-2]['Close']
 
-        lastIRB = data5.iloc[-2]['IRBLONG'] or data5.iloc[-2]['IRBSHORT']
-        secondLastIRB = data5.iloc[-3]['IRBLONG'] or data5.iloc[-3]['IRBSHORT']
+        high, low = self.getPreviousIRB(lookBack=2)
 
         last_result = last_result.lower()
-        if 'buy' in last_result and (lastIRB or secondLastIRB):
+        if 'buy' in last_result and high != 0:
             self.setTargetBuy(close=close)
 
-        if 'sell' in last_result and (lastIRB or secondLastIRB):
+        if 'sell' in last_result and high != 0:
             self.setTargetSell(close=close)
 
     def setTargetBuy(self, close):
 
+        roomLength = self.Trade.entry - self.Trade.orgStopLoss
+        self.Trade.rr12 = round(self.Trade.entry + 2 * roomLength,2)
+        self.Trade.rr13 = round(self.Trade.entry + 3 * roomLength,2)
+        self.Trade.rr14 = round(self.Trade.entry + 4 * roomLength,2)
+
+        if close > self.TradeInd.r3:
+            self.Trade.Target1 = self.Trade.rr12
+            self.Trade.Target2 = self.Trade.rr13
+            self.Trade.Target3 = self.Trade.rr14
+
         if self.TradeInd.r3 < close < self.TradeInd.tHigh:
             self.Trade.Target1 = self.TradeInd.tHigh
-            self.Trade.pivotTarget = self.Trade.Target1
-            self.Trade.Target2 = self.TradeInd.tHigh
-            self.Trade.Target3 = self.TradeInd.tHigh
+
+            self.Trade.Target2 = self.Trade.rr12
+            self.Trade.Target3 = self.Trade.rr13
 
         if self.TradeInd.r2 < close < self.TradeInd.r3:
             self.Trade.Target1 = self.TradeInd.r3
-            self.Trade.pivotTarget = self.Trade.Target1
-            self.Trade.Target2 = self.TradeInd.tHigh
-            self.Trade.Target3 = self.TradeInd.tHigh
+
+            if self.TradeInd.tHigh > self.TradeInd.r3:
+                self.Trade.Target2 = self.TradeInd.tHigh
+            else:
+                self.Trade.Target2 = self.Trade.rr12
+            self.Trade.Target3 = self.Trade.rr13
 
         if self.TradeInd.r1 < close < self.TradeInd.r2:
             self.Trade.Target1 = self.TradeInd.r2
-            self.Trade.pivotTarget = self.Trade.Target1
+
             self.Trade.Target2 = self.TradeInd.r3
-            self.Trade.Target3 = self.TradeInd.tHigh
+            if self.TradeInd.tHigh > self.TradeInd.r3:
+                self.Trade.Target3 = self.TradeInd.tHigh
+            else:
+                self.Trade.Target3 = self.Trade.rr13
 
         if self.TradeInd.pivot < close < self.TradeInd.r1:
             self.Trade.Target1 = self.TradeInd.r1
-            self.Trade.pivotTarget = self.Trade.Target1
+
             self.Trade.Target2 = self.TradeInd.r2
             self.Trade.Target3 = self.TradeInd.r3
 
         if self.TradeInd.s1 < close < self.TradeInd.pivot:
             self.Trade.Target1 = self.TradeInd.pivot
-            self.Trade.pivotTarget = self.Trade.Target1
+
             self.Trade.Target2 = self.TradeInd.r1
             self.Trade.Target3 = self.TradeInd.r2
 
         if self.TradeInd.s2 < close < self.TradeInd.s1:
             self.Trade.Target1 = self.TradeInd.s1
-            self.Trade.pivotTarget = self.Trade.Target1
+
             self.Trade.Target2 = self.TradeInd.pivot
             self.Trade.Target3 = self.TradeInd.r1
 
         if self.TradeInd.s3 < close < self.TradeInd.s2:
             self.Trade.Target1 = self.TradeInd.s2
-            self.Trade.pivotTarget = self.Trade.Target1
+
             self.Trade.Target2 = self.TradeInd.s1
             self.Trade.Target3 = self.TradeInd.pivot
 
-        roomLength = self.Trade.entry - self.Trade.orgStopLoss
-        self.Trade.rr12 = self.Trade.entry + 2 * roomLength
-        self.Trade.rr13 = self.Trade.entry + 3 * roomLength
-        self.Trade.rr14 = self.Trade.entry + 4 * roomLength
+        if self.TradeInd.s3 > close:
+            self.Trade.Target1 = self.Trade.rr12
+            self.Trade.Target2 = self.Trade.rr13
+            self.Trade.Target3 = self.Trade.rr14
+
+        if (self.Trade.Target1 - close) < roomLength:
+            self.Trade.Target1 = self.Trade.rr12
+            self.Trade.Target2 = self.Trade.rr13
+
+        if (self.Trade.Target2 - close) < 2 * roomLength:
+            self.Trade.Target2 = self.Trade.rr13
+            self.Trade.Target3 = self.Trade.rr14
+
+        self.Trade.pivotTarget = self.Trade.Target1
 
     def setTargetSell(self, close):
 
+        roomLength = self.Trade.orgStopLoss - self.Trade.entry
+        self.Trade.rr12 = self.Trade.entry - 2 * roomLength
+        self.Trade.rr13 = self.Trade.entry - 3 * roomLength
+        self.Trade.rr14 = self.Trade.entry - 4 * roomLength
+
+        if close < self.TradeInd.s3:
+            self.Trade.Target1 = self.Trade.rr12
+            self.Trade.Target2 = self.Trade.rr13
+            self.Trade.Target3 = self.Trade.rr14
+
         if self.TradeInd.r2 < close < self.TradeInd.r3:
             self.Trade.Target1 = self.TradeInd.r2
-            self.Trade.pivotTarget = self.Trade.Target1
+
             self.Trade.Target2 = self.TradeInd.r1
             self.Trade.Target3 = self.TradeInd.pivot
 
         if self.TradeInd.r1 < close < self.TradeInd.r2:
             self.Trade.Target1 = self.TradeInd.r1
-            self.Trade.pivotTarget = self.Trade.Target1
+
             self.Trade.Target2 = self.TradeInd.pivot
             self.Trade.Target3 = self.TradeInd.s1
 
         if self.TradeInd.pivot < close < self.TradeInd.r1:
             self.Trade.Target1 = self.TradeInd.pivot
-            self.Trade.pivotTarget = self.Trade.Target1
+
             self.Trade.Target2 = self.TradeInd.s1
             self.Trade.Target3 = self.TradeInd.s2
 
         if self.TradeInd.s1 < close < self.TradeInd.pivot:
             self.Trade.Target1 = self.TradeInd.s1
-            self.Trade.pivotTarget = self.Trade.Target1
+
             self.Trade.Target2 = self.TradeInd.s2
             self.Trade.Target3 = self.TradeInd.s3
 
         if self.TradeInd.s1 < close < self.TradeInd.s2:
             self.Trade.Target1 = self.TradeInd.s2
-            self.Trade.pivotTarget = self.Trade.Target1
+
             self.Trade.Target2 = self.TradeInd.s3
-            self.Trade.Target3 = self.TradeInd.tLow
+            if self.TradeInd.tLow < self.TradeInd.s3:
+                self.Trade.Target3 = self.TradeInd.tLow
+            else:
+                self.Trade.Target3 = self.Trade.rr13
 
         if self.TradeInd.s2 < close < self.TradeInd.s3:
             self.Trade.Target1 = self.TradeInd.s3
-            self.Trade.pivotTarget = self.Trade.Target1
-            self.Trade.Target2 = self.TradeInd.tLow
-            self.Trade.Target3 = self.TradeInd.tLow
+
+            if self.TradeInd.tLow < self.TradeInd.s3:
+                self.Trade.Target2 = self.TradeInd.tLow
+            else:
+                self.Trade.Target2 = self.Trade.rr12
+            self.Trade.Target3 = self.Trade.rr13
 
         if self.TradeInd.s3 < close < self.TradeInd.tLow:
             self.Trade.Target1 = self.TradeInd.tLow
-            self.Trade.pivotTarget = self.Trade.Target1
-            self.Trade.Target2 = self.TradeInd.tLow
-            self.Trade.Target3 = self.TradeInd.tLow
 
-        roomLength = self.Trade.orgStopLoss - self.Trade.entry
-        self.Trade.rr12 = self.Trade.entry + 2 * roomLength
-        self.Trade.rr13 = self.Trade.entry + 3 * roomLength
-        self.Trade.rr14 = self.Trade.entry + 4 * roomLength
+            self.Trade.Target2 = self.Trade.rr12
+            self.Trade.Target3 = self.Trade.rr13
+
+        if self.Trade.Target1 < self.Trade.rr12:
+            self.Trade.Target1 = self.Trade.rr12
+            self.Trade.Target2 = self.Trade.rr13
+            self.Trade.Target3 = self.Trade.rr14
+
+        if close - self.Trade.Target2 < 2 * roomLength:
+            self.Trade.Target2 = self.Trade.rr13
+            self.Trade.Target3 = self.Trade.rr14
+
+        self.Trade.pivotTarget = self.Trade.Target1
 
     # trail the stoploss to logical point
     def trailStopLoss(self):
@@ -339,18 +340,59 @@ class TradeTrigger:
 
         last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
 
-        lastIRB = data5.iloc[-2]['IRBLONG'] or data5.iloc[-2]['IRBSHORT']
+        high, low = self.getPreviousIRB()
+        # lastIRB = data5.iloc[-2]['IRBLONG'] or data5.iloc[-2]['IRBSHORT']
 
         last_result = last_result.lower()
-        if 'buy' in last_result and lastIRB:
-            self.Trade.trailingSL = data5.iloc[-2]['Low']
-        else:
-            logger.info("Could not trail the SL as the previous candle is not IRB")
+        if 'buy' in last_result:  # and lastIRB:
+            self.Trade.trailingSL = low  # data5.iloc[-2]['Low']
+        # else:
+        #   logger.info("Could not trail the SL as the previous candle is not IRB")
 
-        if 'sell' in last_result and lastIRB:
-            self.Trade.trailingSL = data5.iloc[-2]['High']
+        if 'sell' in last_result:  # and lastIRB:
+            self.Trade.trailingSL = high  # data5.iloc[-2]['High']
+        # else:
+        #    logger.info("Could not trail the SL as the previous candle is not IRB")
+
+    def getPreviousIRB(self, sameDay=True, irb=True, lookBack=10):
+        time5 = '5m'
+        data5 = self.TradeInd.newSignalData[time5].data
+
+        if not irb:
+            low = data5.iloc[-2]['Low']
+            high = data5.iloc[-2]['High']
         else:
-            logger.info("Could not trail the SL as the previous candle is not IRB")
+            low = high = 0
+
+        # Convert the index to DDMMYY format
+        if sameDay:
+
+            data5.index = pd.to_datetime(data5.index)
+
+            # Find the index of the row with the latest date
+            latest_date = data5.index[-1].date()
+
+            # Filter the DataFrame based on the target date
+            latest_date_records = data5[data5.index.date == latest_date]
+
+            length = len(latest_date_records)
+            count = 1
+
+            for i in range(length - 2, -1, -1):
+                if count <= lookBack:
+                    row = latest_date_records.iloc[i]
+                    irbLong = row['IRBLONG']
+                    irbShort = row['IRBSHORT']
+
+                    if irbLong or irbShort:
+                        high = row['High']
+                        low = row['Low']
+                        break
+                    count += 1
+
+            #data5.index = data5.index.strftime('%Y-%m-%d %H:%M:%S')
+
+        return high, low
 
     def modifyPivotTarget(self):
         if self.Trade.pivotTarget == self.Trade.Target1:
@@ -449,11 +491,15 @@ class TradeTrigger:
                     triggered = True
 
             if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] < self.Trade.entry):
-                    triggered = True
+                triggered = True
 
             if triggered:
                 self.Trade.tradeOn = True
-                self.Trade.triggerEntryPrice = data5.iloc[-2]['Close']
+                time1 = '1m'
+                data1 = self.TradeInd.newSignalData[time1].data
+                data1 = data1.reset_index()
+
+                self.Trade.triggerEntryPrice = data1.iloc[-2]['Close']
                 self.Trade.startTime = getISTTimeNow()
                 self.Trade.tradeStatus = 'Triggered'
 
@@ -464,6 +510,7 @@ class TradeTrigger:
         triggerCandleSpan = high - low
         length = 50
         entryCandleSpan = abs(self.Trade.entry - self.Trade.orgStopLoss)
+        entryCandleSpan = round(entryCandleSpan, 2)
 
         if triggerCandleSpan < 2 * entryCandleSpan and entryCandleSpan < length:
             stat = True
@@ -481,46 +528,56 @@ class TradeTrigger:
         if self.Trade.buySell == 'SELL':
             self.Trade.pnl = self.Trade.triggerEntryPrice - self.Trade.exit
 
+        self.Trade.pnl = round(self.Trade.pnl, 2)
+
         self.Trade.tradeStatus = f"Original SL hit for {self.Trade.buySell}"
 
         if trailing:
             self.Trade.tradeStatus = f"Trailing SL hit for {self.Trade.buySell}"
-            self.Trade.pnl = abs(self.Trade.pnl)
+
         if iSL:
             self.Trade.tradeStatus = f"Intelligent SL hit for {self.Trade.buySell}"
-            self.Trade.pnl = abs(self.Trade.pnl)
-
-        self.Trade.pnl = round(self.Trade.pnl, 2)
 
         self.recordTrade()
 
     # this function will decide if the stoploss/trailing stoploss is hit
     def isStopLossHit(self):
         if self.Trade.tradeOn:
-            time5 = '5m'
-            data5 = self.TradeInd.newSignalData[time5].data
-            data5 = data5.reset_index()
-            if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] < self.Trade.orgStopLoss):
-                self.handleSLHit(data5.iloc[-2]['Close'])
+            if self.Trade.buySell == 'BUY':
+                self.checkSLForBuy()
+            if self.Trade.buySell == 'SELL':
+                self.checkSLForSell()
 
-            if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] > self.Trade.orgStopLoss):
-                self.handleSLHit(data5.iloc[-2]['Close'])
+    def checkSLForBuy(self):
+        time5 = '5m'
+        data5 = self.TradeInd.newSignalData[time5].data
+        data5 = data5.reset_index()
+        if data5.iloc[-2]['Close'] < self.Trade.orgStopLoss and (self.Trade.orgStopLoss - data5.iloc[-2]['Close']) > 1:
+            self.handleSLHit(data5.iloc[-2]['Close'])
 
-            if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] < self.Trade.trailingSL):
-                if self.Trade.trailingSL != self.Trade.orgStopLoss:
-                    self.handleSLHit(data5.iloc[-2]['Close'], trailing=True)
+        if data5.iloc[-2]['Close'] < self.Trade.trailingSL and (self.Trade.trailingSL - data5.iloc[-2]['Close']) > 1:
+            if self.Trade.trailingSL != self.Trade.orgStopLoss:
+                self.handleSLHit(data5.iloc[-2]['Close'], trailing=True)
 
-            if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] > self.Trade.trailingSL):
-                if self.Trade.trailingSL != self.Trade.orgStopLoss:
-                    self.handleSLHit(data5.iloc[-2]['Close'], trailing=True)
+        if data5.iloc[-2]['Close'] < self.Trade.iSL and (self.Trade.iSL - data5.iloc[-2]['Close']) > 1:
+            if self.Trade.iSL != self.Trade.orgStopLoss:
+                self.handleSLHit(data5.iloc[-2]['Close'], iSL=True)
 
-            if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] < self.Trade.iSL):
-                if self.Trade.iSL != self.Trade.orgStopLoss:
-                    self.handleSLHit(data5.iloc[-2]['Close'], iSL=True)
+    def checkSLForSell(self):
+        time5 = '5m'
+        data5 = self.TradeInd.newSignalData[time5].data
+        data5 = data5.reset_index()
 
-            if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] > self.Trade.iSL):
-                if self.Trade.iSL != self.Trade.orgStopLoss:
-                    self.handleSLHit(data5.iloc[-2]['Close'], iSL=True)
+        if data5.iloc[-2]['Close'] > self.Trade.orgStopLoss and (data5.iloc[-2]['Close'] - self.Trade.orgStopLoss) > 1:
+            self.handleSLHit(data5.iloc[-2]['Close'])
+
+        if data5.iloc[-2]['Close'] > self.Trade.trailingSL and (data5.iloc[-2]['Close'] - self.Trade.trailingSL) > 1:
+            if self.Trade.trailingSL != self.Trade.orgStopLoss:
+                self.handleSLHit(data5.iloc[-2]['Close'], trailing=True)
+
+        if data5.iloc[-2]['Close'] > self.Trade.iSL and (data5.iloc[-2]['Close'] - self.Trade.iSL) > 1:
+            if self.Trade.iSL != self.Trade.orgStopLoss:
+                self.handleSLHit(data5.iloc[-2]['Close'], iSL=True)
 
     def runTrade(self):
         pass

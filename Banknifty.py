@@ -58,7 +58,8 @@ class BankniftyCls:
         bnData = bnData.round(2)
         return bnData
 
-    def vwapGoldenLevels(self, yVWAP, VWAP):
+    @staticmethod
+    def vwapGoldenLevels(yVWAP, VWAP):
         golden = (yVWAP + VWAP) / 2
 
         zonedev = abs(yVWAP - VWAP)
@@ -73,33 +74,6 @@ class BankniftyCls:
         goldenLower = round(goldenLower, 2)
 
         return goldenUpper, golden, goldenLower
-
-    def get_BNDataWithGoldenZonesForDay(self, interval='5m', start=None, end=None):
-
-        bnData = self.get_BNData(interval=interval, start=start, end=end)
-        bnData.index = pd.to_datetime(bnData.index)
-        bnData.index = bnData.index.strftime('%Y-%m-%d %H:%M:%S')
-        #bnData['day'] = bnData.index
-
-
-        #bnData['day'] = pd.to_datetime(bnData['day'])
-
-        #bnData['yday'] = (bnData['day'] - timedelta(1)).strftime('%Y-%m-%d')
-
-        bnData['YVWAP'] = self.getYesterdayVWAP()
-
-        bnData['GOLDEN'] = (bnData['VWAP'] + bnData['YVWAP'])/2.0
-
-
-        bnData['zonedev'] = abs(bnData['yVWAP'] - bnData['VWAP'])
-
-        zone = 0.1
-        bnData['goldenUpper'] = bnData['GOLDEN'] + (bnData['zonedev'] * zone)
-
-        bnData['goldenUpper'] = bnData['GOLDEN'] - (bnData['zonedev'] * zone)
-
-        return bnData
-
 
     # This function will return the candle
     # look_back = Look back candle number from end, if you want the second last candle then look_back=2
@@ -127,7 +101,6 @@ class BankniftyCls:
     def getVWAP(self, start_date, end_date):
 
         dataYDay = self.get_BNData(start=start_date, end=end_date)
-
 
         yDayVWAP = dataYDay[['VWAP', 'Close', 'Volume']].tail(1)
         yDayVWAP = yDayVWAP.reset_index()

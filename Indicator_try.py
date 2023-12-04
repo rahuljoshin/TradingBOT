@@ -2,6 +2,22 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+
+from Indicator import Indicator
+from TradeTrigger import TradeTrigger
+
+ind = Indicator()
+data = ind.getSignals()
+ind.newSignalData['5m'] = ind.newSignalData['5m']._replace(data=data)
+
+trade = TradeTrigger()
+trade.execute(ind)
+
+trade.getPreviousIRB()
+
+
+
+
 '''
 from Indicator import Indicator
 ind = Indicator()
