@@ -152,7 +152,7 @@ class TradeTrigger:
     def setBuyTrade(self):
         # get last candle for the 5 min with IRB buy or sell
         self.Trade.buySell = 'BUY'
-        high, low = self.getPreviousIRB(lookBack=2)
+        high, low = self.getPreviousIRB(lookBack=2, tsl=True)
 
         if high != 0:
             self.Trade.entry = high
@@ -161,7 +161,7 @@ class TradeTrigger:
     def setSellTrade(self):
         # get last candle for the 5 min with IRB buy or sell
         self.Trade.buySell = 'SELL'
-        high, low = self.getPreviousIRB(lookBack=2)
+        high, low = self.getPreviousIRB(lookBack=2, tsl=True)
         if high != 0:
             self.Trade.entry = low
             self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = round(high)
@@ -188,9 +188,9 @@ class TradeTrigger:
     def setTargetBuy(self, close):
 
         roomLength = self.Trade.entry - self.Trade.orgStopLoss
-        self.Trade.rr12 = round(self.Trade.entry + 2 * roomLength,2)
-        self.Trade.rr13 = round(self.Trade.entry + 3 * roomLength,2)
-        self.Trade.rr14 = round(self.Trade.entry + 4 * roomLength,2)
+        self.Trade.rr12 = round(self.Trade.entry + 2 * roomLength, 2)
+        self.Trade.rr13 = round(self.Trade.entry + 3 * roomLength, 2)
+        self.Trade.rr14 = round(self.Trade.entry + 4 * roomLength, 2)
 
         if close > self.TradeInd.r3:
             self.Trade.Target1 = self.Trade.rr12
@@ -354,7 +354,7 @@ class TradeTrigger:
         # else:
         #    logger.info("Could not trail the SL as the previous candle is not IRB")
 
-    def getPreviousIRB(self, sameDay=True, irb=True, lookBack=10):
+    def getPreviousIRB(self, sameDay=True, irb=True, lookBack=10, tsl=False):
         time5 = '5m'
         data5 = self.TradeInd.newSignalData[time5].data
 
@@ -385,12 +385,22 @@ class TradeTrigger:
                     irbShort = row['IRBSHORT']
 
                     if irbLong or irbShort:
-                        high = row['High']
-                        low = row['Low']
-                        break
+                        if high != 0:
+                            high = row['High']
+                            low = row['Low']
+
+                        if tsl and self.Trade.buySell == 'BUY':
+                            high = min(high, row['High'])
+                            low = max(low, row['Low'])
+                        elif tsl and self.Trade.buySell == 'SELL':
+                            high = max(high, row['High'])
+                            low = min(low, row['Low'])
+                        else:
+                            break
+
                     count += 1
 
-            #data5.index = data5.index.strftime('%Y-%m-%d %H:%M:%S')
+            # data5.index = data5.index.strftime('%Y-%m-%d %H:%M:%S')
 
         return high, low
 
