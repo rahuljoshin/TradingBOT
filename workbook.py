@@ -628,7 +628,7 @@ data['TTMSQ'] = (data['UpperBand'] < data['kUpperBand']) & (data['LowerBand'] > 
 
 data.to_csv('11.csv', header=True, index=True)
 '''
-
+'''
 from Indicator import Indicator
 
 def getPreviousIRB(sameDay=True, lookBack=60):
@@ -681,3 +681,32 @@ def getPreviousIRB(sameDay=True, lookBack=60):
 
 high, low = getPreviousIRB()
 print(high, low)
+
+'''
+from datetime import datetime
+from Indicator import Indicator
+import pytz
+
+ind = Indicator()
+data = ind.getSignals()
+
+#data.index = pd.to_datetime(data.index)
+timestamp = data.index[-1]
+date_format = '%Y-%m-%d %H:%M:%S'
+
+datetime_object = datetime.strptime(timestamp, date_format)
+
+#datetime_object = datetime.utcfromtimestamp(timestamp.timestamp())
+
+IST = pytz.timezone('Asia/Kolkata')
+current_time = ist_time = datetime.now(IST)
+
+#date_format = '%Y-%m-%d %H:%M:%S'
+
+#datetime_object = datetime.strptime(index, date_format)
+
+diff = current_time - datetime_object
+
+threshold_time_difference = timedelta()
+
+

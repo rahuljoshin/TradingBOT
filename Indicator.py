@@ -376,12 +376,11 @@ class Indicator:
             if self.newSignalData[time].is_dirty:
                 stat = True
             if self.isWorkingHours():
-                index = data.index[-1]
+                data.index = pd.to_datetime(data.index)
+                timestamp = data.index[-1]
+                datetime_object = datetime.utcfromtimestamp(timestamp.timestamp())
+
                 current_time = getISTTimeNow()
-
-                date_format = '%Y-%m-%d %H:%M:%S'
-
-                datetime_object = datetime.strptime(index, date_format)
 
                 diff = current_time - datetime_object
 
