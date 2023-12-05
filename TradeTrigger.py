@@ -385,7 +385,7 @@ class TradeTrigger:
                     irbShort = row['IRBSHORT']
 
                     if irbLong or irbShort:
-                        if high != 0:
+                        if high == 0:
                             high = row['High']
                             low = row['Low']
 

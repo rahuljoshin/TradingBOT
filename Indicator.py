@@ -76,7 +76,7 @@ class Indicator:
         if self.allSignals():
             self.buyorSell()
 
-            #self.getTopPriceVolumesforDay()
+            # self.getTopPriceVolumesforDay()
 
         self.saveCSVs()
 
@@ -243,13 +243,13 @@ class Indicator:
 
     def fixed_range_volume_profile(self, prices, volumes, num_levels=10):
         price_levels = np.linspace(min(prices), max(prices), num_levels)
+        digitized = np.digitize(prices, price_levels)
+
         volume_profile = np.zeros(num_levels)
 
         for i in range(len(prices)):
-            for j in range(num_levels - 1):
-                if price_levels[j] <= prices[i] < price_levels[j + 1]:
-                    volume_profile[j] += volumes.iloc[i]
-                    break
+            bin_index = digitized[i] - 1
+            volume_profile[bin_index] += volumes.iloc[i]
 
         rounded_price_levels = np.round(price_levels, decimals=2)
 
@@ -504,7 +504,7 @@ class Indicator:
     def inTopVolumeZone(self, bnData):
         self.getTopPriceVolumesforDay()
 
-        #Check if the candle is crossing the top 3 volume price
+        # Check if the candle is crossing the top 3 volume price
         for i in range(len(self.top_vol_records)):
             item = self.top_vol_records[i]
             volPrice = item[0]
