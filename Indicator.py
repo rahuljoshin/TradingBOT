@@ -223,6 +223,15 @@ class Indicator:
         if top3VolBar:
             result = f"{result} $$$Touching TOP3-{self.top_vol_records[2][0]}$$$"
 
+        buySell5 = data5.iloc[-2]['BUYORSELL']
+        buySell30 = data30.iloc[-2]['BUYORSELL']
+
+        if buySell5 == buySell30 and buySell5 != 'WAIT':
+            result = f"+++STRONG {buySell5} {result}+++"
+
+        #goldZoneR = self.checkGoldZone()
+        #result = f"{goldZoneR} {result}"
+
         last_result = self.rData.iloc[-1]['result'] if len(self.rData) else ''
 
         if result != last_result:
@@ -241,7 +250,27 @@ class Indicator:
 
         return result
 
-    def fixed_range_volume_profile(self, prices, volumes, num_levels=10):
+    def checkGoldZone(self):
+        result = ""
+        time5 = '5m'
+        # data5 = self.signal_datas[time5]
+        data5 = self.newSignalData[time5].data
+
+        data5 = data5.reset_index()
+        inGoldZone = data5.iloc[-2]['INGOLDZ']
+        vwapVal = data5.iloc[-2]['VWAP']
+        goldVal = data5.iloc[-2]['GOLD']
+
+        if vwapVal > goldVal and inGoldZone:
+            result = "REBOUND BUY"
+
+        if vwapVal < goldVal and inGoldZone:
+            result = "REBOUND SELL"
+
+        return result
+
+    @staticmethod
+    def fixed_range_volume_profile(prices, volumes, num_levels=10):
         price_levels = np.linspace(min(prices), max(prices), num_levels)
         digitized = np.digitize(prices, price_levels)
 
@@ -285,7 +314,7 @@ class Indicator:
         self.tLow = data.loc[1]['Low']
         self.tClose = data.loc[1]['Close']
 
-        logger.info(f"\nTodays# Open:{self.tOpen} High:{self.tHigh} Low:{self.tLow} Close:{self.tClose}")
+        logger.info(f"\n Todays# Open:{self.tOpen} High:{self.tHigh} Low:{self.tLow} Close:{self.tClose}")
 
     def calculatePivotLevels(self):
 
@@ -368,12 +397,12 @@ class Indicator:
 
         return stat
 
-    def isRecalculate(self, time):
+    def isRecalculate(self, ftime):
         stat = False
-        # data = self.signal_datas[time]
-        data = self.newSignalData[time].data
+        # data = self.signal_datas[ftime]
+        data = self.newSignalData[ftime].data
         if len(data):
-            if self.newSignalData[time].is_dirty:
+            if self.newSignalData[ftime].is_dirty:
                 stat = True
             if self.isWorkingHours():
                 data.index = pd.to_datetime(data.index)
@@ -385,16 +414,16 @@ class Indicator:
                 diff = current_time - datetime_object
 
                 threshold_time_difference = timedelta()
-                if time == '1m':
+                if ftime == '1m':
                     threshold_time_difference = timedelta(minutes=1)
 
-                elif time == '5m':
+                elif ftime == '5m':
                     threshold_time_difference = timedelta(minutes=5)
-                elif time == '15m':
+                elif ftime == '15m':
                     threshold_time_difference = timedelta(minutes=15)
-                elif time == '30m':
+                elif ftime == '30m':
                     threshold_time_difference = timedelta(minutes=30)
-                elif time == '1d':
+                elif ftime == '1d':
                     threshold_time_difference = timedelta(days=1)
 
                 if diff > threshold_time_difference:
@@ -584,6 +613,16 @@ class Indicator:
                 (((bndata['Low'] < bndata['GOLDLOW']) &
                   (bndata['GOLDLOW'] < bndata['High'])) &
                  ((bndata['IRBLONG'] | bndata['IRBSHORT']))))
+
+        bndata['INGOLDZ'] = (
+
+                (((bndata['Low'] < bndata['GOLDUP']) &
+                  (bndata['GOLDUP'] < bndata['High']))) |
+                (((bndata['Low'] < bndata['GOLD']) &
+                  (bndata['GOLD'] < bndata['High']))) |
+                (((bndata['Low'] < bndata['GOLDLOW']) &
+                  (bndata['GOLDLOW'] < bndata['High'])))
+        )
 
         bndata['VWAPBAR'] = (((bndata['Low'] < bndata['VWAP']) & (bndata['VWAP'] < bndata['High']))
                              &

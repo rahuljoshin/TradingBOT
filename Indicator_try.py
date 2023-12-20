@@ -3,6 +3,61 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+def bband(close, length, mult):
+    return pd.Series(close.rolling(window=length).mean() + mult * close.rolling(window=length).std(), name='bband')
+
+def keltner(close, tr, length, mult):
+    return pd.Series(close.ewm(span=length, min_periods=length).mean() + mult * tr.ewm(span=length, min_periods=length).mean(), name='keltner')
+
+def calculate_true_range(data):
+    high = data['High']
+    low = data['Low']
+    close = data['Close']
+
+    # Calculate the True Range
+    tr = pd.DataFrame(index=data.index)
+    tr['hl'] = high - low
+    tr['h_c'] = abs(high - close.shift(1))
+    tr['l_c'] = abs(low - close.shift(1))
+    tr['true_range'] = tr[['hl', 'h_c', 'l_c']].max(axis=1)
+
+    return tr['true_range']
+
+def study(data, length=20):
+    high = data['High']
+    low = data['Low']
+    close = data['Close']
+    tr = calculate_true_range(data)  # You need to calculate or have the true range (tr) in your data
+
+    e1 = (high.rolling(window=length).max() + low.rolling(window=length).min()) / 2 + close.rolling(window=length).mean()
+
+    osc = pd.Series((close - e1 / 2).rolling(window=length).apply(lambda x: np.polyfit(np.arange(len(x)), x, 1)[0], raw=True), name='osc')
+    osc = osc.dropna()
+    #val = osc.values
+    #print(val)
+
+    diff = bband(close, length, 2) - keltner(close, tr, length, 1)
+    diff = diff.dropna()
+    print(diff)
+    osc_color = np.where((osc.shift(1) < osc) & (osc >= 0), '#00ffff', np.where(osc >= 0, '#009b9b', '#cc00cc'))
+    mid_color = np.where(diff >= 0, 'g', 'r')
+
+    print("Length of osc:", len(osc))
+    print("Length of osc_color:", len(osc_color))
+
+    plt.plot(osc.values, color=osc_color, linestyle='-', linewidth=2)
+    plt.plot(np.zeros_like(osc.values), color=mid_color, marker='o', markersize=3, linestyle='None')
+
+    plt.show()
+
+from Banknifty import BankniftyCls
+bank = BankniftyCls()
+
+
+df = bank.get_BNData(period='2d')
+study(df)
+
+'''
 from Indicator import Indicator
 from TradeTrigger import TradeTrigger
 
@@ -18,7 +73,6 @@ trade.getPreviousIRB()
 
 
 
-'''
 from Indicator import Indicator
 ind = Indicator()
 ind.inTopVolumeZone()
@@ -240,13 +294,13 @@ plt.plot(data.index, data['SMA'], label='SMA')
 plt.title('Simple Moving Average (SMA) with Angle ' + str(angle) + ' degrees')
 plt.legend()
 plt.show()
-'''
+
 from Banknifty import BankniftyCls
 from Indicator import Indicator
 algo = Indicator()
 bank = BankniftyCls()
 
-algo.getSignals()
+algo.getSignals()'''
 #records = algo.getSignals(data)
 #records.to_csv('record.csv', header=True, index=True)
 '''
