@@ -63,7 +63,8 @@ class TradeTrigger:
     Trade = Trade()
     TradeInd = Indicator()
     columns = ['start', 'end', 'trigger', 'exit', 'pnl', 'status', 'ON', 'type',
-               'iSLStatus', 'entry', 'orgSL', 'trailingSL', 'iSL', 'T1', 'T2', 'T3']
+               'iSLStatus', 'entry', 'orgSL', 'trailingSL', 'iSL', 'currentTarget',
+               'allTargets', 'targetHitCount', 'targetHitPrice']
 
     tradeBook = pd.DataFrame(columns=columns)
     bot = TemBot()
@@ -141,8 +142,8 @@ class TradeTrigger:
                 f"Trade#: {index}\n ON: {record['ON']} Status: {record['status']} iSL Status: {record['iSLStatus']} Type: {record['type']} "
                 f"\nStart Time: {record['start']} End Time:{record['end']}"
                 f"\nEntry Price: {record['trigger']} Exit Price: {record['exit']} PNL:{record['pnl']}"
-                f"\nEntry Price: {record['entry']} ORG SL: {record['orgSL']} Trailing SL:{record['trailingSL']} iSL:{record['iSL']}"
-                f"\nCurrent Target: {record['currentTarget']}" 
+                f"\nEntry Price: {record['entry']} ORG SL: {record['orgSL']} Trailing SL:{record['trailingSL']} "
+                f"\niSL:{record['iSL']} Current Target: {record['currentTarget']}" 
                 f"\nTargetHitcount: {record['targetHitCount']} TargetHitprice: {record['targetHitPrice']}  "
                 f"\nAll Targets: {record['allTargets']}")
 
@@ -210,7 +211,8 @@ class TradeTrigger:
         self.Trade.rr14 = round(self.Trade.entry + 4 * roomLength, 2)
         values = [self.TradeInd.r1, self.TradeInd.r2, self.TradeInd.r3, self.TradeInd.s1, self.TradeInd.s2,
                   self.TradeInd.s3, self.TradeInd.tHigh, self.TradeInd.tLow, self.TradeInd.phigh, self.TradeInd.plow,
-                  self.TradeInd.pivot, self.Trade.rr12, self.Trade.rr13, self.Trade.rr14]
+                  self.TradeInd.pivot, self.Trade.rr12, self.Trade.rr13,
+                  self.Trade.rr14, self.TradeInd.vwap, self.TradeInd.yvwap]
 
         filtered_values = [value for value in values if value > (close + roomLength)]
 
@@ -228,9 +230,10 @@ class TradeTrigger:
         values = [self.TradeInd.r1, self.TradeInd.r2, self.TradeInd.r3, self.TradeInd.s1, self.TradeInd.s2,
                   self.TradeInd.s3, self.TradeInd.tHigh, self.TradeInd.tLow, self.TradeInd.phigh,
                   self.TradeInd.plow,
-                  self.TradeInd.pivot, self.Trade.rr12, self.Trade.rr13, self.Trade.rr14]
+                  self.TradeInd.pivot, self.Trade.rr12, self.Trade.rr13,
+                  self.Trade.rr14, self.TradeInd.vwap, self.TradeInd.yvwap]
 
-        filtered_values = [value for value in values if value < (close - roomLength)]
+        filtered_values = [value for value in values if ((close - roomLength) > value > 0)]
 
         # Sort the filtered values
         sorted_values = sorted(filtered_values, reverse=True)

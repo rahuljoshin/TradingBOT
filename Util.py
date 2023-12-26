@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 import pytz
 
 import logging
@@ -41,3 +41,21 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 
+
+def isWorkingHours():
+    stat = False
+
+    weekday = getISTTimeNow().isoweekday()
+
+    # Define the time range
+    start_time = time(9, 15, 0)  # 9:15 AM
+    end_time = time(15, 30, 0)  # 3:30 PM
+
+    # Get the current time
+    current_time = getISTTimeNow().time()
+
+    # Check if the current time is within the time range
+    if start_time <= current_time <= end_time and weekday < 6:
+        stat = True
+
+    return stat

@@ -682,13 +682,15 @@ def getPreviousIRB(sameDay=True, lookBack=60):
 high, low = getPreviousIRB()
 print(high, low)
 
-'''
+
 from datetime import datetime
 from Indicator import Indicator
 import pytz
 
 ind = Indicator()
 data = ind.getSignals()
+
+ind.setVWAP(data)
 
 #data.index = pd.to_datetime(data.index)
 timestamp = data.index[-1]
@@ -708,5 +710,60 @@ current_time = ist_time = datetime.now(IST)
 diff = current_time - datetime_object
 
 threshold_time_difference = timedelta()
+
+'''
+
+from Derivatives import NSE
+from Util import logger
+from TradeTrigger import TradeTrigger
+
+nse = NSE()
+name = 'BANKNIFTY'
+price = 47400
+strikePrice = 'PE_strikePrice'
+identifier = 'PE_identifier'
+bank_nifty_option_chain = nse.get_option_chain(
+    ticker=name,
+    is_index=True
+)
+print(bank_nifty_option_chain)
+
+inmoney = bank_nifty_option_chain[bank_nifty_option_chain[strikePrice] == price][identifier].values[0]
+call_ohlc = nse.get_ohlc_data(inmoney, timeframe='5Min', is_index=True)
+
+df = nse.get_second_wise_data(ticker_or_index=inmoney,is_index=True, underlying_symbol=None )
+
+print(call_ohlc)
+#data = nse.get_raw_option_chain(ticker=name)
+#data = nse.get_second_wise_data()
+#nse.get_equity_options_trade_info()
+#print(data)
+#bank_nifty_option_chain[bank_nifty_option_chain[strikePrice] ==
+ #                                              strikePrice]
+#https://pypi.org/project/kitetrader/
+
+
+
+from kite_trade import *
+# # First Way to Login
+# # You can use your Kite app in mobile
+# # But You can't login anywhere in 'kite.zerodha.com' website else this session will disconnected
+'''
+user_id = "NT1462"       # Login Id
+password = "kite@1407"      # Login password
+twofa = "480344"         # Login Pin or TOTP
+
+enctoken = get_enctoken(user_id, password, twofa)
+'''
+
+token = 'w5wGOzst4Z2Myu1/GPdWGtQJs+Mq6gTDabfbJTRHNAefhcifV8Jo0WAdr/B7ASHJcJEqPWbtr1hmojRrV6SCSHSzeg9CppjP+ZW1tOWrWzQZ2sVSlgc8OA=='
+kite = KiteApp(enctoken=token)
+
+print(kite.ltp(["NSE:NIFTY 50", "NFO:BANKNIFTY23DEC47400PE"]))
+
+#https://www.youtube.com/watch?v=Pz2GGsf0gps
+
+
+
 
 

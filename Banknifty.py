@@ -109,7 +109,6 @@ class BankniftyCls:
 
         return vwapLast
 
-
     def calGoldenLevel(self, yVWAP, VWAP):
         golden = (yVWAP + VWAP) / 2
 
