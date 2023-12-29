@@ -215,9 +215,9 @@ class IndHelper:
 
         for i in range(length, len(src)):
             tr_values = np.array([
-                src[i] - src[i - 1],
-                np.abs(src[i] - src[i - 1]),
-                np.abs(src[i] - src[i - length])
+                src.iloc[i] - src.iloc[i - 1],
+                np.abs(src.iloc[i] - src.iloc[i - 1]),
+                np.abs(src.iloc[i] - src.iloc[i - length])
             ])
             atr_values[i] = np.mean(tr_values) * mult
 
