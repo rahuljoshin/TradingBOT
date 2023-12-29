@@ -713,6 +713,7 @@ threshold_time_difference = timedelta()
 
 '''
 
+'''
 from Derivatives import NSE
 from Util import logger
 from TradeTrigger import TradeTrigger
@@ -742,7 +743,7 @@ print(call_ohlc)
  #                                              strikePrice]
 #https://pypi.org/project/kitetrader/
 
-
+'''
 
 from kite_trade import *
 # # First Way to Login

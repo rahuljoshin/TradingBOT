@@ -143,7 +143,7 @@ class TradeTrigger:
                 f"\nStart Time: {record['start']} End Time:{record['end']}"
                 f"\nEntry Price: {record['trigger']} Exit Price: {record['exit']} PNL:{record['pnl']}"
                 f"\nEntry Price: {record['entry']} ORG SL: {record['orgSL']} Trailing SL:{record['trailingSL']} "
-                f"\niSL:{record['iSL']} Current Target: {record['currentTarget']}" 
+                f"\niSL:{record['iSL']} Current Target: {record['currentTarget']}"
                 f"\nTargetHitcount: {record['targetHitCount']} TargetHitprice: {record['targetHitPrice']}  "
                 f"\nAll Targets: {record['allTargets']}")
 
@@ -223,10 +223,10 @@ class TradeTrigger:
             self.Trade.pivotTarget = self.Trade.allTargets[0]
 
     def setTargetSell(self, close):
-        roomLength = self.Trade.entry - self.Trade.orgStopLoss
-        self.Trade.rr12 = round(self.Trade.entry + 2 * roomLength, 2)
-        self.Trade.rr13 = round(self.Trade.entry + 3 * roomLength, 2)
-        self.Trade.rr14 = round(self.Trade.entry + 4 * roomLength, 2)
+        roomLength = self.Trade.orgStopLoss - self.Trade.entry
+        self.Trade.rr12 = round(self.Trade.entry - 2 * roomLength, 2)
+        self.Trade.rr13 = round(self.Trade.entry - 3 * roomLength, 2)
+        self.Trade.rr14 = round(self.Trade.entry - 4 * roomLength, 2)
         values = [self.TradeInd.r1, self.TradeInd.r2, self.TradeInd.r3, self.TradeInd.s1, self.TradeInd.s2,
                   self.TradeInd.s3, self.TradeInd.tHigh, self.TradeInd.tLow, self.TradeInd.phigh,
                   self.TradeInd.plow,
@@ -257,7 +257,6 @@ class TradeTrigger:
 
         if 'sell' in last_result and high != 0:
             self.Trade.trailingSL = high
-
 
     def getPreviousIRB(self, sameDay=True, irb=True, lookBack=10, tsl=False):
         time5 = '5m'
@@ -360,7 +359,7 @@ class TradeTrigger:
         # if moving towards target 50% then move SL to entry if moved close to target 80% then move SL to 50%
         # this will ensure the intermediate profit booking
         # taking reference of Current Target for setting the iSL
-        #If the iSL is set then only Trail the SL
+        # If the iSL is set then only Trail the SL
 
         self.trailISL(min1Close)
         if self.Trade.iSLStatus != 'Not set':
@@ -400,7 +399,7 @@ class TradeTrigger:
             time5 = '5m'
             data5 = self.TradeInd.newSignalData[time5].data
             data5 = data5.reset_index()
-            if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low']):
+            if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low'], data5.iloc[-2]['Close']):
 
                 if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] > self.Trade.entry):
                     triggered = True
@@ -420,18 +419,42 @@ class TradeTrigger:
 
         return triggered
 
-    def normalCandle(self, high, low):
+    def normalCandle(self, high, low, close):
         stat = False
         triggerCandleSpan = round(high - low, 2)
-        length = 60
+        length = 70
         entryCandleSpan = abs(self.Trade.entry - self.Trade.orgStopLoss)
         entryCandleSpan = round(entryCandleSpan, 2)
 
+        limit = self.Trade.entry
+        if self.Trade.buySell == 'BUY':
+            limit = self.Trade.entry + entryCandleSpan
+            if close < limit:
+                stat = True
+            else:
+                logger.info(f"Close: {close} Limit: {limit} "
+                            f"\n RULE1: For Buy Close < Limit is not satisfied")
+
+        if self.Trade.buySell == 'SELL':
+            limit = self.Trade.entry - entryCandleSpan
+            if close > limit:
+                stat = True
+            else:
+                stat = False
+                logger.info(f"Close: {close} Limit: {limit} "
+                            f"\n RULE1: For SELL Close > Limit is not satisfied")
+
         if triggerCandleSpan < 2 * entryCandleSpan and entryCandleSpan < length:
-            stat = True
+            if stat: #Checking earlier status is true and then only setting as true
+                stat = True
+            else:
+                stat = False
+                logger.info("Candle length condition is OK but Candle close condition is not satisfied")
         else:
             logger.info(f"EntryCandleSpan: {entryCandleSpan} Trigger span: {triggerCandleSpan} "
-                        f"\nRULE:Trigger candle span < {2 * entryCandleSpan} and Entry candle span < {length} ")
+                    f"\n RULE2:Trigger candle span < {2 * entryCandleSpan} and Entry candle span < {length} ")
+            stat = False
+
         return stat
 
     def handleSLHit(self, close, trailing=False, iSL=False):
@@ -468,7 +491,7 @@ class TradeTrigger:
         data5 = self.TradeInd.newSignalData[time5].data
         data5 = data5.reset_index()
         close = data5.iloc[-2]['Close']
-        #Check the difference is atlest greater than 1
+        # Check the difference is atlest greater than 1
         if close < self.Trade.orgStopLoss and (self.Trade.orgStopLoss - close) > 1:
             self.handleSLHit(close)
 

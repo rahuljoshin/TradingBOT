@@ -61,6 +61,12 @@ class IndHelper:
         spanB_mult = 6.0
         offset = 26
 
+        tenkan = IndHelper.avgNew(close, high, low, tenkan_len, tenkan_mult)
+        kijun = IndHelper.avgNew(close, high, low, kijun_len, kijun_mult)
+        senkouA = np.nanmean([kijun, tenkan], axis=0)
+        senkouB = IndHelper.avgNew(close, high, low, spanB_len, spanB_mult)
+
+        '''
         data = {'close': close, 'high': high, 'low': low}  # Replace with your actual data
         src = pd.DataFrame(data)
         tenkan = IndHelper.avg1(src, tenkan_len, tenkan_mult)
@@ -68,6 +74,8 @@ class IndHelper:
 
         senkouA = np.nanmean([kijun, tenkan], axis=0)
         senkouB = IndHelper.avg1(src, spanB_len, spanB_mult)
+        '''
+
         return tenkan, kijun, senkouA, senkouB
 
     @staticmethod
@@ -198,3 +206,59 @@ class IndHelper:
                                                  window=window, smooth_window=smooth_window)
         return stoch.stoch(), stoch.stoch_signal()
 
+    @staticmethod
+    def avgNew(src, high, low, length, mult):
+
+        hl2 = (high+low) / 2
+
+        atr_values = np.zeros_like(src, dtype=float)
+
+        for i in range(length, len(src)):
+            tr_values = np.array([
+                src[i] - src[i - 1],
+                np.abs(src[i] - src[i - 1]),
+                np.abs(src[i] - src[i - length])
+            ])
+            atr_values[i] = np.mean(tr_values) * mult
+
+        up = hl2 + atr_values
+        dn = hl2 - atr_values
+
+        upper = lower = 0.0
+
+        upper = np.where(src < upper, np.minimum(up, upper), up)
+        lower = np.where(src > lower, np.maximum(dn, lower), dn)
+
+        os, max_val, min_val = 0, src.iloc[0], src.iloc[0]
+
+        os = np.where(src > upper, 1, np.where(src < lower, 0, os))
+        spt = np.where(os == 1, lower, upper)
+
+        shifted_max_val = np.roll(max_val, 1)
+
+        max_val = np.where(
+            np.where(src > spt, True, False),
+            np.maximum(src, shifted_max_val),
+            np.where(
+                os == 1,
+                np.maximum(src, shifted_max_val),
+                spt
+            )
+        )
+
+        shifted_min_val = np.roll(min_val, 1)
+
+        min_val = np.where(
+            np.where(src > spt, True, False),
+            np.minimum(src, shifted_min_val),
+            np.where(
+                os == 0,
+                np.minimum(src, shifted_min_val),
+                spt
+            )
+        )
+        return np.nanmean([max_val, min_val], axis=0)
+
+    @staticmethod
+    def ta_cross(a, b):
+        return a > b and a.shift(1) <= b.shift(1)
