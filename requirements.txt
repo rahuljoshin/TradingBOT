@@ -17,3 +17,5 @@ Werkzeug==2.2.2
 zipp==3.10.0
 schedule
 Bharat-sm-data
+kiteconnect
+pyotp

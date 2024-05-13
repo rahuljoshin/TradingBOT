@@ -79,8 +79,6 @@ class Indicator:
         if self.allSignals():
             self.buyorSell()
 
-            # self.getTopPriceVolumesforDay()
-
         self.saveCSVs()
 
     def saveCSVs(self):
@@ -570,7 +568,7 @@ class Indicator:
 
         bndata['GOLDBAR'] = (
 
-                (((bndata['Low'] < bndata['GOLDUP']) &
+                    (((bndata['Low'] < bndata['GOLDUP']) &
                   (bndata['GOLDUP'] < bndata['High'])) & (bndata['IRBLONG'] | bndata['IRBSHORT'])) |
                 (((bndata['Low'] < bndata['GOLD']) &
                   (bndata['GOLD'] < bndata['High'])) & (bndata['IRBLONG'] | bndata['IRBSHORT'])) |

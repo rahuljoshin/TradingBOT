@@ -746,6 +746,7 @@ print(call_ohlc)
 '''
 
 from kite_trade import *
+
 # # First Way to Login
 # # You can use your Kite app in mobile
 # # But You can't login anywhere in 'kite.zerodha.com' website else this session will disconnected
@@ -757,14 +758,80 @@ twofa = "480344"         # Login Pin or TOTP
 enctoken = get_enctoken(user_id, password, twofa)
 '''
 
-token = 'w5wGOzst4Z2Myu1/GPdWGtQJs+Mq6gTDabfbJTRHNAefhcifV8Jo0WAdr/B7ASHJcJEqPWbtr1hmojRrV6SCSHSzeg9CppjP+ZW1tOWrWzQZ2sVSlgc8OA=='
+'''
+token = 'cfoRiDzIBiAvVEXxXLssc3f/K+mJPeS9zpHr6nV3r3b30AhCcXU4uEDlbsgrFaSHZGN9cEga+iIhQ3cZuik65TiYw1NgfNBKoXod57qLPdo32x3b1f6t8g=='
 kite = KiteApp(enctoken=token)
 
-print(kite.ltp(["NSE:NIFTY 50", "NFO:BANKNIFTY23DEC47400PE"]))
+print(kite.ltp(["NSE:NIFTY 50", "NFO:BANKNIFTY2410348300CE"]))
+
+# Get Historical Data
+import datetime
+instrument_token = 11991042
+from_datetime = datetime.datetime.now() - datetime.timedelta(days=1)     # From last & days
+to_datetime = datetime.datetime.now()
+interval = "minute"
+
+
+data = pd.DataFrame(kite.historical_data(instrument_token, from_datetime, to_datetime, interval, continuous=False, oi=False))
+data.to_csv("data.csv",header=True, index=True)
+
+print(data)
 
 #https://www.youtube.com/watch?v=Pz2GGsf0gps
 
 
+from Zerodha import *
+from pyotp import TOTP
 
+user_id = "NT1462"  # Login Id
+password = "kite@1407"  # Login password
+# twofa = "245176"         # Login Pin or TOTP
+totp_key = "QBI7DT2O23PYPAQOLX7N2SJ4HFWATBMJ"
+otp = TOTP(totp_key).now()
+print(otp)
+login_with_credentials(user_id, password, otp)
+
+# login_with_credentials(user_id, password, twofa)
+
+
+with open("enctoken.txt") as f1:
+    enctoken = f1.read()
+kite = KiteApp(api_key="sxc1c2ygbmrvq6xd", userid=user_id, enctoken=enctoken)
+print(kite.ltp(["NSE:NIFTY 50", "NFO:BANKNIFTY2410348300CE"]))
+
+print('test')
+
+
+from Indicator import Indicator
+
+ind = Indicator()
+data = ind.getSignals()
+'''
+
+from neo_api_client import NeoAPI
+
+
+
+def on_message(message):
+    print(message)
+
+
+def on_error(error_message):
+    print(error_message)
+
+
+client = NeoAPI(consumer_key="ejEVATnJJg6JlmT1jDrdaAPePSwa", consumer_secret="rb1Ux2JV_Gs6MjhMBRQCyXWPLzwa",
+                environment='prod', on_message=on_message, on_error=on_error, on_close=None, on_open=None)
+
+mpin='140779'
+client.login(mobilenumber="+919890400707", password="Neo@1407", mpin=mpin)
+
+# Complete login and generate session token
+client.session_2fa(OTP= mpin)
+
+
+print(client.order_report())
+
+print('Done')
 
 

@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import ta as lib
+import ta.volatility
 
 
 class IndHelper:
@@ -198,18 +199,17 @@ class IndHelper:
 
         return (max_val + min_val) / 2
 
-
     @staticmethod
     def getStoch(high, low, close, window, smooth_window):
 
-        stoch = lib.wrapper.StochasticOscillator(high=high,low=low, close=close,
+        stoch = lib.wrapper.StochasticOscillator(high=high, low=low, close=close,
                                                  window=window, smooth_window=smooth_window)
         return stoch.stoch(), stoch.stoch_signal()
 
     @staticmethod
     def avgNew(src, high, low, length, mult):
 
-        hl2 = (high+low) / 2
+        hl2 = (high + low) / 2
 
         atr_values = np.zeros_like(src, dtype=float)
 
@@ -260,5 +260,43 @@ class IndHelper:
         return np.nanmean([max_val, min_val], axis=0)
 
     @staticmethod
+    def avgX(src, high, low, length, mult):
+        hl2 = (high + low) / 2
+
+        atr_values = np.zeros_like(src, dtype=float)
+
+        for i in range(length, len(src)):
+            tr_values = np.array([
+                src.iloc[i] - src.iloc[i - 1],
+                np.abs(src.iloc[i] - src.iloc[i - 1]),
+                np.abs(src.iloc[i] - src.iloc[i - length])
+            ])
+            atr_values[i] = np.mean(tr_values) * mult
+
+        up = hl2 + atr_values
+        dn = hl2 - atr_values
+
+        # Initialize Series with zeros
+        os = pd.Series(0, index=src.index)
+        max_val = pd.Series(0, index=src.index)
+        min_val = pd.Series(0, index=src.index)
+
+        # Calculate os based on conditions
+        os = np.where(src > up, 1, np.where(src < dn, 0, os))
+
+        # Calculate spt using pandas Series
+        spt = pd.Series(np.where(os == 1, dn, up), index=src.index)
+
+        # Calculate max_val and min_val based on ta_cross condition
+        max_val = np.where(IndHelper.ta_cross(src, spt), np.maximum(src, max_val), spt)
+        min_val = np.where(IndHelper.ta_cross(src, spt), np.minimum(src, min_val), spt)
+
+        return (max_val + min_val)/2
+
+    @staticmethod
     def ta_cross(a, b):
-        return a > b and a.shift(1) <= b.shift(1)
+        return np.logical_and(a > b, a.shift(1) <= b.shift(1))
+
+
+
+

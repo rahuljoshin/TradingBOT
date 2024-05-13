@@ -1,3 +1,4 @@
+import pandas as pd
 from Derivatives import NSE
 from Util import logger
 from TradeTrigger import TradeTrigger
@@ -17,12 +18,17 @@ class OptionTrader:
     )
 
     tradeTrigger = TradeTrigger()
+    atOption = inOption = outOption = pd.DataFrame()
+
 
     def execute(self, tradeTrigger):
         self.tradeTrigger = tradeTrigger
         self.init()
+        self.confirmBuyOrSell()
+
 
     def init(self):
+        self.atOption = self.inOption = self.outOption = pd.DataFrame()
         time5 = '5m'
         data5 = self.tradeTrigger.TradeInd.newSignalData[time5].data
         # data5 = data5.reset_index()
@@ -41,62 +47,83 @@ class OptionTrader:
             strikePrice = 'PE_strikePrice'
             identifier = 'PE_identifier'
 
-        atmoney = self.bank_nifty_option_chain[self.bank_nifty_option_chain[strikePrice] ==
+        atmoneyStr = self.bank_nifty_option_chain[self.bank_nifty_option_chain[strikePrice] ==
                                                atMoney][identifier].values[0]
-        inmoney = self.bank_nifty_option_chain[self.bank_nifty_option_chain[strikePrice] ==
+        inmoneyStr = self.bank_nifty_option_chain[self.bank_nifty_option_chain[strikePrice] ==
                                                inMoney][identifier].values[0]
-        outmoney = self.bank_nifty_option_chain[self.bank_nifty_option_chain[strikePrice] ==
+        outmoneyStr = self.bank_nifty_option_chain[self.bank_nifty_option_chain[strikePrice] ==
                                                 outMoney][identifier].values[0]
 
-        logger.info(f"At money:{atmoney} In Money:{inmoney}, OutMoney:{outmoney}")
+        self.atOption = self.populateData(atmoneyStr)
+        self.inOption = self.populateData(inmoneyStr)
+        self.outOption = self.populateData(outmoneyStr)
 
-        optionDataATM = self.nse.get_ohlc_data(atmoney, timeframe='5Min', is_index=True)
-        #optionDataITM = self.nse.get_ohlc_data(inmoney, timeframe='5Min', is_index=True)
-        #optionDataOTM = self.nse.get_ohlc_data(outmoney, timeframe='5Min', is_index=True)
+    def populateData(self, price):
+
+        optionData = self.nse.get_ohlc_data(price, timeframe='5Min', is_index=True)
 
         # PSAR, RSI9,3,21 and stocastics
-        optionDataATM['SAR'] = lib.wrapper.PSARIndicator(high=optionDataATM['high'],
-                                                         low=optionDataATM['low'], close=optionDataATM['close']).psar()
-        optionDataATM['RSI9'] = lib.wrapper.RSIIndicator(close=optionDataATM['close'], window=9).rsi()
-        optionDataATM['EMA3_RSI'] = lib.wrapper.EMAIndicator(optionDataATM['RSI9'], window=3).ema_indicator()
+        optionData['SAR'] = lib.wrapper.PSARIndicator(high=optionData['high'],
+                                                         low=optionData['low'], close=optionData['close']).psar()
+        optionData['RSI9'] = lib.wrapper.RSIIndicator(close=optionData['close'], window=9).rsi()
+        optionData['EMA3_RSI'] = lib.wrapper.EMAIndicator(optionData['RSI9'], window=3).ema_indicator()
 
-        stoch = lib.wrapper.StochasticOscillator(high=optionDataATM['high'],
-                                                  low=optionDataATM['low'], close=optionDataATM['close'],
+        stoch = lib.wrapper.StochasticOscillator(high=optionData['high'],
+                                                  low=optionData['low'], close=optionData['close'],
                                                   window=4,
                                                   smooth_window=1)
-        optionDataATM['%K'] = stoch.stoch()
-        optionDataATM['%D'] = stoch.stoch_signal()
+        optionData['%K'] = stoch.stoch()
+        optionData['%D'] = stoch.stoch_signal()
 
         # SMA5,20,50 and EMA 18,50
-        optionDataATM['SMA5'] = optionDataATM['close'].rolling(window=5).mean()
-        optionDataATM['EMA18'] = optionDataATM['close'].ewm(span=18).mean()
-        optionDataATM['SMA20'] = optionDataATM['close'].rolling(window=20).mean()
-        optionDataATM['SMA50'] = optionDataATM['close'].rolling(window=50).mean()
-        optionDataATM['EMA50'] = optionDataATM['close'].ewm(span=50).mean()
+        optionData['SMA5'] = optionData['close'].rolling(window=5).mean()
+        optionData['EMA18'] = optionData['close'].ewm(span=18).mean()
+        optionData['SMA20'] = optionData['close'].rolling(window=20).mean()
+        optionData['SMA50'] = optionData['close'].rolling(window=50).mean()
+        optionData['EMA50'] = optionData['close'].ewm(span=50).mean()
 
-        optionDataATM['SMA50'].fillna(optionDataATM['EMA50'], inplace=True)
+        optionData['SMA50'].fillna(optionData['EMA50'], inplace=True)
 
         # Bollinger band 20,2
-        optionDataATM['BBUpperBand'], optionDataATM['BBLowerBand'] = IndHelper.calBB(optionDataATM['close'], period=20,
+        optionData['BBUpperBand'], optionData['BBLowerBand'] = IndHelper.calBB(optionData['close'], period=20,
                                                                                      stddev=2)
 
-        optionDataATM['kUpperBand'], optionDataATM['kMiddleLine'], optionDataATM['kLowerBand'] = (
-            IndHelper.calculateKeltnerChannel(optionDataATM['high'],
-                                              optionDataATM['low'], optionDataATM['close'], period=20, multiplier=2))
+        optionData['kUpperBand'], optionData['kMiddleLine'], optionData['kLowerBand'] = (
+            IndHelper.calculateKeltnerChannel(optionData['high'],
+                                              optionData['low'], optionData['close'], period=20, multiplier=2))
 
-        optionDataATM['TTMSQ'] = (optionDataATM['BBUpperBand'] < optionDataATM['kUpperBand']) & (
-                optionDataATM['BBLowerBand'] > optionDataATM['kLowerBand'])
+        optionData['TTMSQ'] = (optionData['BBUpperBand'] < optionData['kUpperBand']) & (
+                optionData['BBLowerBand'] > optionData['kLowerBand'])
 
-        optionDataATM['diff'] = optionDataATM['close'] - ((optionDataATM['kMiddleLine'] + optionDataATM['SMA20']) / 2)
+        optionData['diff'] = optionData['close'] - ((optionData['kMiddleLine'] + optionData['SMA20']) / 2)
 
-        optionDataATM['tenkan'], optionDataATM['kijun'], optionDataATM['senkouA'], optionDataATM['senkouB'] = (
-            IndHelper.calcSuperIchi(optionDataATM['close'], optionDataATM['high'], optionDataATM['low']))
+        optionData['tenkan'], optionData['kijun'], optionData['senkouA'], optionData['senkouB'] = (
+            IndHelper.calcSuperIchi(optionData['close'], optionData['high'], optionData['low']))
 
-        optionDataATM['IRBLONG'], optionDataATM['IRBSHORT'] = (
-            IndHelper.findIRB(optionDataATM['open'], optionDataATM['high'],
-                              optionDataATM['low'], optionDataATM['close']))
+        optionData['IRBLONG'], optionData['IRBSHORT'] = (
+            IndHelper.findIRB(optionData['open'], optionData['high'],
+                              optionData['low'], optionData['close']))
 
-        print(optionDataATM)
+        '''
+        optionData['Price'] = (optionData['high'] + optionData['low']) / 2
+        #optionData['Price_times_Volume'] = optionData['Price'] * optionData['Volume']
+
+        criteria = optionData.index.strftime('%Y-%m-%d')
+
+        optionData['Cumulative_Price_Volume'] = optionData.groupby(criteria)[['Price_times_Volume']].cumsum()
+
+        optionData['Cumulative_Volume'] = optionData.groupby(criteria)[['Volume']].cumsum()
+
+        optionData['VWAP'] = optionData['Cumulative_Price_Volume'] / optionData['Cumulative_Volume']
+        '''
+
+        return optionData
+
+    def confirmBuyOrSell(self):
+        #check the current ststus of the option value
+        #atOption.iloc[-2]['Close'] > data30.iloc[-2]['EMA18']))
+        #close5Min = self.atOption['Close']
+        pass
 
     def decideINATOUT(self):
         pass
