@@ -117,6 +117,8 @@ class OptionTrader:
         optionData['VWAP'] = optionData['Cumulative_Price_Volume'] / optionData['Cumulative_Volume']
         '''
 
+
+
         return optionData
 
     def confirmBuyOrSell(self):
