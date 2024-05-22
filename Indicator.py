@@ -436,14 +436,15 @@ class Indicator:
         bndata['SMA50'].fillna(bndata['EMA50'], inplace=True)
 
         # Bollinger band 20,2
-        bndata['BBUpperBand'], bndata['BBLowerBand'] = IndHelper.calBB(bndata['Close'], period=20, stddev=2)
+        bndata['BBUpperBand2'], bndata['BBLowerBand2'] = IndHelper.calBB(bndata['Close'], period=20, stddev=2)
+        bndata['BBUpperBand1'], bndata['BBLowerBand1'] = IndHelper.calBB(bndata['Close'], period=20, stddev=1)
 
         bndata['kUpperBand'], bndata['kMiddleLine'], bndata['kLowerBand'] = (
             IndHelper.calculateKeltnerChannel(bndata['High'],
                                               bndata['Low'], bndata['Close'], period=20, multiplier=2))
 
-        bndata['TTMSQ'] = (bndata['BBUpperBand'] < bndata['kUpperBand']) & (
-                bndata['BBLowerBand'] > bndata['kLowerBand'])
+        bndata['TTMSQ'] = (bndata['BBUpperBand2'] < bndata['kUpperBand']) & (
+                bndata['BBLowerBand2'] > bndata['kLowerBand'])
 
         bndata['diff'] = bndata['Close'] - ((bndata['kMiddleLine'] + bndata['SMA20']) / 2)
 
@@ -545,6 +546,36 @@ class Indicator:
 
         bnData['S1'] = (
             ((bnData['High'] > self.s1) & (bnData['Low'] < self.s1)
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['UpperBB2'] = (
+            ((bnData['High'] > bnData['BBUpperBand2']) & (bnData['Low'] < bnData['BBUpperBand2'])
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['LowerBB2'] = (
+            ((bnData['High'] > bnData['BBLowerBand2']) & (bnData['Low'] < bnData['BBLowerBand2'])
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['UpperBB1'] = (
+            ((bnData['High'] > bnData['BBUpperBand1']) & (bnData['Low'] < bnData['BBUpperBand1'])
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['LowerBB1'] = (
+            ((bnData['High'] > bnData['BBLowerBand1']) & (bnData['Low'] < bnData['BBLowerBand1'])
+             &
+             (bnData['IRBLONG'] | bnData['IRBSHORT'])
+             ))
+
+        bnData['SMA5'] = (
+            ((bnData['High'] > bnData['SMA5']) & (bnData['Low'] < bnData['SMA5'])
              &
              (bnData['IRBLONG'] | bnData['IRBSHORT'])
              ))

@@ -30,7 +30,7 @@ class IndHelper:
         return BBUpperBand, BBLowerBand
 
     @staticmethod
-    def calculateKeltnerChannel(high, low, close, period=20, multiplier=2):
+    def calculateKeltnerChannel(high, low, close, period=20, multiplier=1.5):
         # Calculate True Range (TR)
         TR = np.maximum(high - low, abs(high - close.shift(1)),
                         abs(low - close.shift(1)))
