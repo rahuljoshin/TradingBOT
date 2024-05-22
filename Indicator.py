@@ -550,31 +550,31 @@ class Indicator:
              (bnData['IRBLONG'] | bnData['IRBSHORT'])
              ))
 
-        bnData['UpperBB2'] = (
+        bnData['UpBB2IRB'] = (
             ((bnData['High'] > bnData['BBUpperBand2']) & (bnData['Low'] < bnData['BBUpperBand2'])
              &
              (bnData['IRBLONG'] | bnData['IRBSHORT'])
              ))
 
-        bnData['LowerBB2'] = (
+        bnData['LowBB2IRB'] = (
             ((bnData['High'] > bnData['BBLowerBand2']) & (bnData['Low'] < bnData['BBLowerBand2'])
              &
              (bnData['IRBLONG'] | bnData['IRBSHORT'])
              ))
 
-        bnData['UpperBB1'] = (
+        bnData['UpBB1IRB'] = (
             ((bnData['High'] > bnData['BBUpperBand1']) & (bnData['Low'] < bnData['BBUpperBand1'])
              &
              (bnData['IRBLONG'] | bnData['IRBSHORT'])
              ))
 
-        bnData['LowerBB1'] = (
+        bnData['LowBB1IRB'] = (
             ((bnData['High'] > bnData['BBLowerBand1']) & (bnData['Low'] < bnData['BBLowerBand1'])
              &
              (bnData['IRBLONG'] | bnData['IRBSHORT'])
              ))
 
-        bnData['SMA5'] = (
+        bnData['SMA5IRB'] = (
             ((bnData['High'] > bnData['SMA5']) & (bnData['Low'] < bnData['SMA5'])
              &
              (bnData['IRBLONG'] | bnData['IRBSHORT'])

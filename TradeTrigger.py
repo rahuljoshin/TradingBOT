@@ -82,8 +82,8 @@ class TradeTrigger:
             self.TradeInd = ind
             self.reset()
 
-            self.setEntryAndSL()
-            self.setTarget()
+            self.setEntrySLTarget()
+
             self.isTradeTriggered()
             self.printTrade()
 
@@ -153,7 +153,7 @@ class TradeTrigger:
 
     # this function will decide the entry point
 
-    def setEntryAndSL(self):
+    def setEntrySLTarget(self):
         # get last candle for the 5 min with IRB buy or sell
         time5 = '5m'
         data5 = self.TradeInd.newSignalData[time5].data
@@ -161,13 +161,15 @@ class TradeTrigger:
         last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
 
         last_result = last_result.lower()
+        close = data5.iloc[-2]['Close']
+
         if 'buy' in last_result:
-            self.setBuyTrade()
+            self.setBuyTrade(close=close)
 
         if 'sell' in last_result:
-            self.setSellTrade()
+            self.setSellTrade(close=close)
 
-    def setBuyTrade(self):
+    def setBuyTrade(self, close):
         # get last candle for the 5 min with IRB buy or sell
         self.Trade.buySell = 'BUY'
         high, low = self.getPreviousIRB(lookBack=2, tsl=True)
@@ -175,16 +177,21 @@ class TradeTrigger:
         if high != 0:
             self.Trade.entry = high
             self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = round(low)
+            self.setTargetBuy(close=close)
 
-    def setSellTrade(self):
+    def setSellTrade(self, close):
         # get last candle for the 5 min with IRB buy or sell
         self.Trade.buySell = 'SELL'
         high, low = self.getPreviousIRB(lookBack=2, tsl=True)
+
         if high != 0:
             self.Trade.entry = low
             self.Trade.orgStopLoss = self.Trade.trailingSL = self.Trade.iSL = round(high)
 
+            self.setTargetSell(close=close)
+
     # this function will decide the target point
+    '''
     def setTarget(self):
         time5 = '5m'
         data5 = self.TradeInd.newSignalData[time5].data
@@ -202,6 +209,7 @@ class TradeTrigger:
 
         if 'sell' in last_result and high != 0:
             self.setTargetSell(close=close)
+    '''
 
     def setTargetBuy(self, close):
 
@@ -323,6 +331,7 @@ class TradeTrigger:
             self.Trade.pivotTarget = values[0]
         else:
             self.Trade.tradeOn = False
+            self.Trade.tradeStatus = f"{self.Trade.tradeStatus } !!All targets HIT!!"
 
     def handleTargetHit(self, close):
         self.Trade.exit = close
@@ -334,14 +343,14 @@ class TradeTrigger:
 
         self.Trade.pnl = round(self.Trade.pnl, 2)
 
-        self.Trade.tradeStatus = f"Original SL hit for {self.Trade.buySell}"
+        self.Trade.tradeStatus = f"Target #{self.Trade.targetHitCount} hit for {self.Trade.buySell}"
+
+        self.trailStopLoss()
+        self.modifyPivotTarget()
 
         self.recordTrade()
 
-        #self.trailStopLoss()
-        #self.modifyPivotTarget()
-
-        # this function will decide if the target is hit
+    # this function will decide if the target is hit
 
     def isTargetHit(self):
         if self.Trade.tradeOn:
