@@ -408,11 +408,11 @@ class Indicator:
         bndata = pd.DataFrame()
 
         if interval == '1m' or interval == '5m':
-            bndata = bank.get_BNData(interval=interval, period='2d')
+            bndata = bank.get_BNData(interval=interval, period='5d')
         elif interval == '15m' or interval == '30m':
-            bndata = bank.get_BNData(interval=interval, period='6d')
+            bndata = bank.get_BNData(interval=interval, period='5d')
         elif interval == '1d':
-            bndata = bank.get_BNData(interval=interval, period='60d')
+            bndata = bank.get_BNData(interval=interval, period='1mo')
 
         # PSAR, RSI9,3,21 and stocastics
         bndata['SAR'] = lib.wrapper.PSARIndicator(high=bndata['High'], low=bndata['Low'], close=bndata['Close']).psar()
@@ -433,7 +433,8 @@ class Indicator:
         bndata['SMA50'] = bndata['Close'].rolling(window=50).mean()
         bndata['EMA50'] = bndata['Close'].ewm(span=50).mean()
 
-        bndata['SMA50'].fillna(bndata['EMA50'], inplace=True)
+        #bndata['SMA50'].fillna(bndata['EMA50'], inplace=True)
+        bndata['SMA50'] = bndata['SMA50'].fillna(bndata['EMA50'])
 
         # Bollinger band 20,2
         bndata['BBUpperBand2'], bndata['BBLowerBand2'] = IndHelper.calBB(bndata['Close'], period=20, stddev=2)

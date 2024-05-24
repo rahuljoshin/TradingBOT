@@ -1,4 +1,4 @@
-pip==23.3.1
+pip
 yfinance
 pandas
 pandas_ta
@@ -19,3 +19,4 @@ schedule
 Bharat-sm-data
 kiteconnect
 pyotp
+bottleneck
