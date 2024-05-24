@@ -322,7 +322,7 @@ class Indicator:
         if self.TCPR == 0:
             logger.info("Calculating pivot level")
             bank = BankniftyCls()
-            data = bank.get_Candle(period='2d', interval='1d', latest=False)
+            data = bank.get_Candle(period='5d', interval='1d', latest=False)
             self.phigh = data.loc[1]['High']
             self.plow = data.loc[1]['Low']
             self.pclose = data.loc[1]['Close']
