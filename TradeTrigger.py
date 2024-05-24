@@ -335,7 +335,7 @@ class TradeTrigger:
 
     def handleTargetHit(self, close):
         self.Trade.exit = close
-        self.Trade.tradeOn = False
+        #self.Trade.tradeOn = False
         self.Trade.endTime = getISTTimeNow()
         self.Trade.targetHitPrice = self.Trade.pivotTarget
         self.Trade.targetHitCount += 1

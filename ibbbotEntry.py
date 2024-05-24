@@ -51,7 +51,7 @@ def executeRun():
 
             ind.execute()
             tradeTrigger.execute(ind)
-            optionTrader.execute(tradeTrigger)
+            #optionTrader.execute(tradeTrigger)
             current_time = getISTTimeNow()
             msg = f"Execute SUCCESS at {current_time}"
             logger.info(msg)
