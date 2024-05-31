@@ -80,12 +80,16 @@ class TradeTrigger:
 
         if not self.Trade.tradeOn:
             self.TradeInd = ind
-            self.reset()
 
-            self.setEntrySLTarget()
+            if not self.isTradeTriggered():
+                self.reset()
 
-            self.isTradeTriggered()
-            self.printTrade()
+                self.setEntrySLTarget()
+
+                self.isTradeTriggered()
+                self.printTrade()
+            else:
+                self.monitorTrade()
 
         else:
             self.monitorTrade()
@@ -322,10 +326,12 @@ class TradeTrigger:
 
         values = []
 
+        roomLength = abs(self.Trade.entry - self.Trade.orgStopLoss)
+
         if self.Trade.buySell == 'BUY':
-            values = [value for value in self.Trade.allTargets if value > self.Trade.pivotTarget]
+            values = [value for value in self.Trade.allTargets if value > self.Trade.pivotTarget+roomLength]
         elif self.Trade.buySell == 'SELL':
-            values = [value for value in self.Trade.allTargets if value < self.Trade.pivotTarget]
+            values = [value for value in self.Trade.allTargets if value < self.Trade.pivotTarget-roomLength]
 
         if len(values) > 0:
             self.Trade.pivotTarget = values[0]
