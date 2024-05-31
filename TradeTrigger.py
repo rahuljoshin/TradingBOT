@@ -13,6 +13,7 @@ class Trade:
     entry = -1.0
     exit = -1.0
     pnl = 0.0
+    recentClose = -1
 
     iSL = -1.0
     iSLStatus = 'Not set'
@@ -40,6 +41,7 @@ class Trade:
         self.entry = -1.0
         self.exit = -1.0
         self.pnl = 0.0
+        self.recentClose = -1
 
         self.iSL = -1.0
         self.iSLStatus = 'Not set'
@@ -103,6 +105,7 @@ class TradeTrigger:
 
         message = "-------------------------------------"
 
+        message = f"{message}\n Last 1 MIN Close: {self.Trade.recentClose}"
         message = f"{message}\n Trade On: {self.Trade.tradeOn}"
 
         message = f"{message}\n Trade start: {self.Trade.startTime}, Trade end: {self.Trade.endTime}"
@@ -264,10 +267,10 @@ class TradeTrigger:
 
         last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
         last_result = last_result.lower()
-        if 'buy' in last_result and low != 0:
+        if self.Trade.buySell == 'BUY' and low != 0:
             self.Trade.trailingSL = low
 
-        if 'sell' in last_result and high != 0:
+        if self.Trade.buySell == 'SELL' and high != 0:
             self.Trade.trailingSL = high
 
     def getPreviousIRB(self, sameDay=True, irb=True, lookBack=10, tsl=False):
@@ -339,8 +342,8 @@ class TradeTrigger:
             self.Trade.tradeOn = False
             self.Trade.tradeStatus = f"{self.Trade.tradeStatus } !!All targets HIT!!"
 
-    def handleTargetHit(self, close):
-        self.Trade.exit = close
+    def handleTargetHit(self):
+        self.Trade.exit = self.Trade.recentClose
         #self.Trade.tradeOn = False
         self.Trade.endTime = getISTTimeNow()
         self.Trade.targetHitPrice = self.Trade.pivotTarget
@@ -363,18 +366,19 @@ class TradeTrigger:
             time1 = '1m'
             data1 = self.TradeInd.newSignalData[time1].data
             data1 = data1.reset_index()
-            close = data1.iloc[-2]['Close']
-            if (self.Trade.buySell == 'BUY') and (close > self.Trade.pivotTarget):
-                self.handleTargetHit(close)
-            else:
-                self.checkTrailingPossible(close)
+            self.Trade.recentClose = data1.iloc[-2]['Close']
 
-            if (self.Trade.buySell == 'SELL') and (close < self.Trade.pivotTarget):
-                self.handleTargetHit(close)
+            if (self.Trade.buySell == 'BUY') and (self.Trade.recentClose > self.Trade.pivotTarget):
+                self.handleTargetHit()
             else:
-                self.checkTrailingPossible(close)
+                self.checkTrailingPossible()
 
-    def checkTrailingPossible(self, min1Close):
+            if (self.Trade.buySell == 'SELL') and (self.Trade.recentClose < self.Trade.pivotTarget):
+                self.handleTargetHit()
+            else:
+                self.checkTrailingPossible()
+
+    def checkTrailingPossible(self):
         pass
         # if moving towards target 50% then move SL to entry if moved close to target 80% then move SL to 50%
         # this will ensure the intermediate profit booking
@@ -387,17 +391,17 @@ class TradeTrigger:
             self.trailStopLoss()
         '''
 
-    def trailISL(self, min1Close):
+    def trailISL(self):
 
         if self.Trade.buySell == 'BUY':
             diff = abs(self.Trade.pivotTarget - self.Trade.triggerEntryPrice)
             halfWay = self.Trade.triggerEntryPrice + (diff * 0.5)
             eightyPer = self.Trade.triggerEntryPrice + (diff * 0.8)
 
-            if min1Close > halfWay:
+            if self.Trade.recentClose > halfWay:
                 self.Trade.iSL = self.Trade.triggerEntryPrice
                 self.Trade.iSLStatus = 'Moved to Entry zero loss'
-            if min1Close > eightyPer:
+            if self.Trade.recentClose > eightyPer:
                 self.Trade.iSL = halfWay
                 self.Trade.iSLStatus = 'Moved to 50% ensure half'
 
@@ -406,10 +410,10 @@ class TradeTrigger:
             halfWay = self.Trade.triggerEntryPrice - (diff * 0.5)
             eightyPer = self.Trade.triggerEntryPrice - (diff * 0.8)
 
-            if min1Close > halfWay:
+            if self.Trade.recentClose > halfWay:
                 self.Trade.iSL = self.Trade.triggerEntryPrice
                 self.Trade.iSLStatus = 'Moved to Entry zero loss'
-            if min1Close > eightyPer:
+            if self.Trade.recentClose > eightyPer:
                 self.Trade.iSL = halfWay
                 self.Trade.iSLStatus = 'Moved to 50% ensure half'
 
@@ -417,6 +421,12 @@ class TradeTrigger:
         # here we will check if the trade is triggered based on the entry criteria
         # Check that 5 min close is above high for buy and 5 min close below low for sell
         triggered = False
+        time1 = '1m'
+        data1 = self.TradeInd.newSignalData[time1].data
+        data1 = data1.reset_index()
+        self.Trade.recentClose = data1.iloc[-2]['Close']
+
+        self.Trade.triggerEntryPrice = data1.iloc[-2]['Close']
         if self.Trade.entry > 0 and self.Trade.orgStopLoss > 0:
             time5 = '5m'
             data5 = self.TradeInd.newSignalData[time5].data
@@ -431,11 +441,7 @@ class TradeTrigger:
 
             if triggered:
                 self.Trade.tradeOn = True
-                time1 = '1m'
-                data1 = self.TradeInd.newSignalData[time1].data
-                data1 = data1.reset_index()
-
-                self.Trade.triggerEntryPrice = data1.iloc[-2]['Close']
+                self.Trade.triggerEntryPrice = self.Trade.recentClose
                 self.Trade.startTime = getISTTimeNow()
                 self.Trade.tradeStatus = 'Triggered'
 
