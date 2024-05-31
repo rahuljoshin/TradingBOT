@@ -426,7 +426,6 @@ class TradeTrigger:
         data1 = data1.reset_index()
         self.Trade.recentClose = data1.iloc[-2]['Close']
 
-        self.Trade.triggerEntryPrice = data1.iloc[-2]['Close']
         if self.Trade.entry > 0 and self.Trade.orgStopLoss > 0:
             time5 = '5m'
             data5 = self.TradeInd.newSignalData[time5].data
