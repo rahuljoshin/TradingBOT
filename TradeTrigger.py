@@ -13,7 +13,8 @@ class Trade:
     entry = -1.0
     exit = -1.0
     pnl = 0.0
-    recentClose = -1
+    recent1minClose = -1
+    recent5minClose = -1
 
     iSL = -1.0
     iSLStatus = 'Not set'
@@ -41,7 +42,8 @@ class Trade:
         self.entry = -1.0
         self.exit = -1.0
         self.pnl = 0.0
-        self.recentClose = -1
+        self.recent1minClose = -1
+        self.recent5minClose = -1
 
         self.iSL = -1.0
         self.iSLStatus = 'Not set'
@@ -105,7 +107,7 @@ class TradeTrigger:
 
         message = "-------------------------------------"
 
-        message = f"{message}\n Last 1 MIN Close: {self.Trade.recentClose}"
+        message = f"{message}\n Last 1 MIN Close: {self.Trade.recent1minClose}, Last 5 MIN Close: {self.Trade.recent5minClose}"
         message = f"{message}\n Trade On: {self.Trade.tradeOn}"
 
         message = f"{message}\n Trade start: {self.Trade.startTime}, Trade end: {self.Trade.endTime}"
@@ -343,7 +345,7 @@ class TradeTrigger:
             self.Trade.tradeStatus = f"{self.Trade.tradeStatus } !!All targets HIT!!"
 
     def handleTargetHit(self):
-        self.Trade.exit = self.Trade.recentClose
+        self.Trade.exit = self.Trade.recent1minClose
         #self.Trade.tradeOn = False
         self.Trade.endTime = getISTTimeNow()
         self.Trade.targetHitPrice = self.Trade.pivotTarget
@@ -366,14 +368,14 @@ class TradeTrigger:
             time1 = '1m'
             data1 = self.TradeInd.newSignalData[time1].data
             data1 = data1.reset_index()
-            self.Trade.recentClose = data1.iloc[-2]['Close']
+            self.Trade.recent1minClose = data1.iloc[-2]['Close']
 
-            if (self.Trade.buySell == 'BUY') and (self.Trade.recentClose > self.Trade.pivotTarget):
+            if (self.Trade.buySell == 'BUY') and (self.Trade.recent1minClose > self.Trade.pivotTarget):
                 self.handleTargetHit()
             else:
                 self.checkTrailingPossible()
 
-            if (self.Trade.buySell == 'SELL') and (self.Trade.recentClose < self.Trade.pivotTarget):
+            if (self.Trade.buySell == 'SELL') and (self.Trade.recent1minClose < self.Trade.pivotTarget):
                 self.handleTargetHit()
             else:
                 self.checkTrailingPossible()
@@ -398,10 +400,10 @@ class TradeTrigger:
             halfWay = self.Trade.triggerEntryPrice + (diff * 0.5)
             eightyPer = self.Trade.triggerEntryPrice + (diff * 0.8)
 
-            if self.Trade.recentClose > halfWay:
+            if self.Trade.recent1minClose > halfWay:
                 self.Trade.iSL = self.Trade.triggerEntryPrice
                 self.Trade.iSLStatus = 'Moved to Entry zero loss'
-            if self.Trade.recentClose > eightyPer:
+            if self.Trade.recent1minClose > eightyPer:
                 self.Trade.iSL = halfWay
                 self.Trade.iSLStatus = 'Moved to 50% ensure half'
 
@@ -410,10 +412,10 @@ class TradeTrigger:
             halfWay = self.Trade.triggerEntryPrice - (diff * 0.5)
             eightyPer = self.Trade.triggerEntryPrice - (diff * 0.8)
 
-            if self.Trade.recentClose > halfWay:
+            if self.Trade.recent1minClose > halfWay:
                 self.Trade.iSL = self.Trade.triggerEntryPrice
                 self.Trade.iSLStatus = 'Moved to Entry zero loss'
-            if self.Trade.recentClose > eightyPer:
+            if self.Trade.recent1minClose > eightyPer:
                 self.Trade.iSL = halfWay
                 self.Trade.iSLStatus = 'Moved to 50% ensure half'
 
@@ -424,23 +426,26 @@ class TradeTrigger:
         time1 = '1m'
         data1 = self.TradeInd.newSignalData[time1].data
         data1 = data1.reset_index()
-        self.Trade.recentClose = data1.iloc[-2]['Close']
+        self.Trade.recent1minClose = data1.iloc[-2]['Close']
+
+        time5 = '5m'
+        data5 = self.TradeInd.newSignalData[time5].data
+        data5 = data5.reset_index()
+        self.Trade.recent5minClose = data5.iloc[-2]['Close']
 
         if self.Trade.entry > 0 and self.Trade.orgStopLoss > 0:
-            time5 = '5m'
-            data5 = self.TradeInd.newSignalData[time5].data
-            data5 = data5.reset_index()
-            if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low'], data5.iloc[-2]['Close']):
 
-                if (self.Trade.buySell == 'BUY') and (data5.iloc[-2]['Close'] > self.Trade.entry):
+            if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low'], self.Trade.recent5minClose):
+
+                if (self.Trade.buySell == 'BUY') and (self.Trade.recent5minClose > self.Trade.entry):
                     triggered = True
 
-                if (self.Trade.buySell == 'SELL') and (data5.iloc[-2]['Close'] < self.Trade.entry):
+                if (self.Trade.buySell == 'SELL') and (self.Trade.recent5minClose < self.Trade.entry):
                     triggered = True
 
             if triggered:
                 self.Trade.tradeOn = True
-                self.Trade.triggerEntryPrice = self.Trade.recentClose
+                self.Trade.triggerEntryPrice = self.Trade.recent1minClose
                 self.Trade.startTime = getISTTimeNow()
                 self.Trade.tradeStatus = 'Triggered'
 
@@ -506,50 +511,25 @@ class TradeTrigger:
 
     # this function will decide if the stoploss/trailing stoploss is hit
     def isStopLossHit(self):
+        time5 = '5m'
+        data5 = self.TradeInd.newSignalData[time5].data
+        data5 = data5.reset_index()
+        self.Trade.recent5minClose = data5.iloc[-2]['Close']
         if self.Trade.tradeOn:
             if self.Trade.buySell == 'BUY':
-                self.checkSLForBuy()
+
+                # Check the difference is atlest greater than 1
+                if self.Trade.recent5minClose < self.Trade.orgStopLoss and (
+                        self.Trade.orgStopLoss - self.Trade.recent5minClose) > 1:
+                    self.handleSLHit(self.Trade.recent5minClose)
+
             elif self.Trade.buySell == 'SELL':
-                self.checkSLForSell()
 
-    def checkSLForBuy(self):
-        time5 = '5m'
-        data5 = self.TradeInd.newSignalData[time5].data
-        data5 = data5.reset_index()
-        close = data5.iloc[-2]['Close']
-        # Check the difference is atlest greater than 1
-        if close < self.Trade.orgStopLoss and (self.Trade.orgStopLoss - close) > 1:
-            self.handleSLHit(close)
+                if (self.Trade.recent5minClose > self.Trade.orgStopLoss and
+                        (self.Trade.recent5minClose - self.Trade.orgStopLoss) > 1):
+                    self.handleSLHit(self.Trade.recent5minClose)
 
-        '''
-        elif close < self.Trade.trailingSL and (self.Trade.trailingSL - close) > 1:
-            if self.Trade.trailingSL != self.Trade.orgStopLoss:
-                self.handleSLHit(close, trailing=True)
 
-        elif close < self.Trade.iSL and (self.Trade.iSL - close) > 1:
-            if self.Trade.iSL != self.Trade.orgStopLoss:
-                self.handleSLHit(close, iSL=True)
-        '''
-
-    def checkSLForSell(self):
-        time5 = '5m'
-        data5 = self.TradeInd.newSignalData[time5].data
-        data5 = data5.reset_index()
-        close = data5.iloc[-2]['Close']
-
-        if close > self.Trade.orgStopLoss and (close - self.Trade.orgStopLoss) > 1:
-            self.handleSLHit(close)
-
-        '''
-        # Check the difference is atlest greater than 1
-        elif close > self.Trade.trailingSL and (close - self.Trade.trailingSL) > 1:
-            if self.Trade.trailingSL != self.Trade.orgStopLoss:
-                self.handleSLHit(close, trailing=True)
-
-        elif close > self.Trade.iSL and (close - self.Trade.iSL) > 1:
-            if self.Trade.iSL != self.Trade.orgStopLoss:
-                self.handleSLHit(close, iSL=True)
-        '''
 
     def runTrade(self):
         pass
