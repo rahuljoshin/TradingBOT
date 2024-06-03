@@ -267,8 +267,6 @@ class TradeTrigger:
 
         high, low = self.getPreviousIRB(lookBack=2, tsl=True)
 
-        last_result = self.TradeInd.rData.iloc[-1]['result'] if len(self.TradeInd.rData) else ''
-        last_result = last_result.lower()
         if self.Trade.buySell == 'BUY' and low != 0:
             self.Trade.trailingSL = low
 
@@ -334,9 +332,9 @@ class TradeTrigger:
         roomLength = abs(self.Trade.entry - self.Trade.orgStopLoss)
 
         if self.Trade.buySell == 'BUY':
-            values = [value for value in self.Trade.allTargets if value > self.Trade.pivotTarget+roomLength]
+            values = [value for value in self.Trade.allTargets if value > self.Trade.pivotTarget+(roomLength*0.5)]
         elif self.Trade.buySell == 'SELL':
-            values = [value for value in self.Trade.allTargets if value < self.Trade.pivotTarget-roomLength]
+            values = [value for value in self.Trade.allTargets if value < self.Trade.pivotTarget-(roomLength*0.5)]
 
         if len(values) > 0:
             self.Trade.pivotTarget = values[0]
@@ -373,12 +371,12 @@ class TradeTrigger:
             if (self.Trade.buySell == 'BUY') and (self.Trade.recent1minClose > self.Trade.pivotTarget):
                 self.handleTargetHit()
             else:
-                self.checkTrailingPossible()
+                self.trailStopLoss()
 
             if (self.Trade.buySell == 'SELL') and (self.Trade.recent1minClose < self.Trade.pivotTarget):
                 self.handleTargetHit()
             else:
-                self.checkTrailingPossible()
+                self.trailStopLoss()
 
     def checkTrailingPossible(self):
         pass
@@ -523,12 +521,18 @@ class TradeTrigger:
                         self.Trade.orgStopLoss - self.Trade.recent5minClose) > 1:
                     self.handleSLHit(self.Trade.recent5minClose)
 
+                elif self.Trade.recent5minClose < self.Trade.trailingSL and (
+                        self.Trade.trailingSL - self.Trade.recent5minClose) > 1:
+                    self.handleSLHit(self.Trade.recent5minClose)
+
             elif self.Trade.buySell == 'SELL':
 
                 if (self.Trade.recent5minClose > self.Trade.orgStopLoss and
                         (self.Trade.recent5minClose - self.Trade.orgStopLoss) > 1):
                     self.handleSLHit(self.Trade.recent5minClose)
-
+                elif (self.Trade.recent5minClose > self.Trade.trailingSL and
+                        (self.Trade.recent5minClose - self.Trade.trailingSL) > 1):
+                    self.handleSLHit(self.Trade.recent5minClose)
 
 
     def runTrade(self):
