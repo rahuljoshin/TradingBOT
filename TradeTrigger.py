@@ -523,16 +523,17 @@ class TradeTrigger:
 
                 elif self.Trade.recent5minClose < self.Trade.trailingSL and (
                         self.Trade.trailingSL - self.Trade.recent5minClose) > 1:
-                    self.handleSLHit(self.Trade.recent5minClose)
+                    self.handleSLHit(self.Trade.recent5minClose, trailing=True)
 
             elif self.Trade.buySell == 'SELL':
 
                 if (self.Trade.recent5minClose > self.Trade.orgStopLoss and
                         (self.Trade.recent5minClose - self.Trade.orgStopLoss) > 1):
                     self.handleSLHit(self.Trade.recent5minClose)
+
                 elif (self.Trade.recent5minClose > self.Trade.trailingSL and
                         (self.Trade.recent5minClose - self.Trade.trailingSL) > 1):
-                    self.handleSLHit(self.Trade.recent5minClose)
+                    self.handleSLHit(self.Trade.recent5minClose, trailing=True)
 
 
     def runTrade(self):
