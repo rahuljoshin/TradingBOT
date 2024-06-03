@@ -452,7 +452,7 @@ class TradeTrigger:
     def normalCandle(self, high, low, close):
         stat = False
         triggerCandleSpan = round(high - low, 2)
-        length = 70
+        length = 90
         entryCandleSpan = abs(self.Trade.entry - self.Trade.orgStopLoss)
         entryCandleSpan = round(entryCandleSpan, 2)
 
