@@ -10,6 +10,7 @@ from TelgramCom import TemBot
 class Trade:
     startTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
     endTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
+    min1BreakTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
     entry = -1.0
     exit = -1.0
     pnl = 0.0
@@ -29,7 +30,10 @@ class Trade:
     rr13 = -1.0
     rr14 = -1.0
     tradeOn = False
+    earlyExit = False
+
     buySell = 'WAIT'
+    min1Break = False
 
     tradeStatus = 'Not Triggered'
 
@@ -39,6 +43,7 @@ class Trade:
     def reset(self):
         self.startTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
         self.endTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
+        self.min1BreakTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
         self.entry = -1.0
         self.exit = -1.0
         self.pnl = 0.0
@@ -60,6 +65,8 @@ class Trade:
         self.rr13 = -1.0
         self.rr14 = -1.0
         self.buySell = 'WAIT'
+        self.min1Break = False
+        self.earlyExit = False
         self.tradeStatus = 'Not Triggered'
 
 
@@ -85,7 +92,7 @@ class TradeTrigger:
         if not self.Trade.tradeOn:
             self.TradeInd = ind
 
-            if not self.isTradeTriggered():
+            if not self.isTradeTriggered() and not self.Trade.min1Break:
                 self.reset()
 
                 self.setEntrySLTarget()
@@ -108,6 +115,13 @@ class TradeTrigger:
         message = "-------------------------------------"
 
         message = f"{message}\n Last 1 MIN Close: {self.Trade.recent1minClose}, Last 5 MIN Close: {self.Trade.recent5minClose}"
+
+        if self.Trade.min1Break:
+            message = f"{message}\n *** 1 Min Break at : {self.Trade.min1BreakTime} ***"
+
+        if self.Trade.earlyExit:
+            message = f"{message}\n $$$ Early Exit HIT $$$"
+
         message = f"{message}\n Trade On: {self.Trade.tradeOn}"
 
         message = f"{message}\n Trade start: {self.Trade.startTime}, Trade end: {self.Trade.endTime}"
@@ -135,7 +149,7 @@ class TradeTrigger:
         for count, value in enumerate(self.Trade.allTargets, start=1):
             targetStr += f"Target{count}: {value} "
 
-        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime,
+        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime, 'min1': self.Trade.min1Break,
                     'trigger': self.Trade.triggerEntryPrice,
                     'exit': self.Trade.exit, 'pnl': self.Trade.pnl,
                     'status': self.Trade.tradeStatus, 'ON': self.Trade.tradeOn, 'type': self.Trade.buySell,
@@ -149,7 +163,7 @@ class TradeTrigger:
         for index, record in self.tradeBook.iterrows():
             logger.info(
                 f"Trade#: {index}\n ON: {record['ON']} Status: {record['status']} iSL Status: {record['iSLStatus']} Type: {record['type']} "
-                f"\nStart Time: {record['start']} End Time:{record['end']}"
+                f"\nStart Time: {record['start']} End Time:{record['end']} Min1Break:{record['min1']}"
                 f"\nEntry Price: {record['trigger']} Exit Price: {record['exit']} PNL:{record['pnl']}"
                 f"\nEntry Price: {record['entry']} ORG SL: {record['orgSL']} Trailing SL:{record['trailingSL']} "
                 f"\niSL:{record['iSL']} Current Target: {record['currentTarget']}"
@@ -277,7 +291,7 @@ class TradeTrigger:
         time5 = '5m'
         data5 = self.TradeInd.newSignalData[time5].data
 
-        if not irb:
+        if tsl:
             low = data5.iloc[-2]['Low']
             high = data5.iloc[-2]['High']
         else:
@@ -433,6 +447,16 @@ class TradeTrigger:
 
         if self.Trade.entry > 0 and self.Trade.orgStopLoss > 0:
 
+            if ((self.Trade.buySell == 'BUY') and (self.Trade.recent1minClose > self.Trade.entry)
+                    and not self.Trade.min1Break):
+                self.Trade.min1Break = True
+                self.Trade.min1BreakTime = getISTTimeNow()
+
+            if ((self.Trade.buySell == 'SELL') and (self.Trade.recent1minClose < self.Trade.entry)
+                    and not self.Trade.min1Break):
+                self.Trade.min1Break = True
+                self.Trade.min1BreakTime = getISTTimeNow()
+
             if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low'], self.Trade.recent5minClose):
 
                 if (self.Trade.buySell == 'BUY') and (self.Trade.recent5minClose > self.Trade.entry):
@@ -503,7 +527,7 @@ class TradeTrigger:
             self.Trade.tradeStatus = f"Trailing SL hit for {self.Trade.buySell}"
 
         if iSL:
-            self.Trade.tradeStatus = f"Intelligent SL hit for {self.Trade.buySell}"
+            self.Trade.tradeStatus = f"SL hit with 5 SMA condition for  {self.Trade.buySell}"
 
         self.recordTrade()
 
@@ -516,6 +540,9 @@ class TradeTrigger:
         if self.Trade.tradeOn:
             if self.Trade.buySell == 'BUY':
 
+                if data5.iloc[-2]['SMA5'] < data5.iloc[-3]['SMA5']:
+                    self.Trade.earlyExit = True
+
                 # Check the difference is atlest greater than 1
                 if self.Trade.recent5minClose < self.Trade.orgStopLoss and (
                         self.Trade.orgStopLoss - self.Trade.recent5minClose) > 1:
@@ -525,7 +552,13 @@ class TradeTrigger:
                         self.Trade.trailingSL - self.Trade.recent5minClose) > 1:
                     self.handleSLHit(self.Trade.recent5minClose, trailing=True)
 
+                elif self.Trade.targetHitCount > 0 and self.Trade.recent5minClose < data5.iloc[-2]['SMA5']:
+                    self.handleSLHit(self.Trade.recent5minClose, iSL=True)
+
             elif self.Trade.buySell == 'SELL':
+
+                if data5.iloc[-2]['SMA5'] > data5.iloc[-3]['SMA5']:
+                    self.Trade.earlyExit = True
 
                 if (self.Trade.recent5minClose > self.Trade.orgStopLoss and
                         (self.Trade.recent5minClose - self.Trade.orgStopLoss) > 1):
@@ -534,6 +567,9 @@ class TradeTrigger:
                 elif (self.Trade.recent5minClose > self.Trade.trailingSL and
                         (self.Trade.recent5minClose - self.Trade.trailingSL) > 1):
                     self.handleSLHit(self.Trade.recent5minClose, trailing=True)
+
+                elif self.Trade.targetHitCount > 0 and self.Trade.recent5minClose > data5.iloc[-2]['SMA5']:
+                    self.handleSLHit(self.Trade.recent5minClose, iSL=True)
 
 
     def runTrade(self):
