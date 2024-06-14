@@ -73,7 +73,7 @@ class Trade:
 class TradeTrigger:
     Trade = Trade()
     TradeInd = Indicator()
-    columns = ['start', 'end', 'trigger', 'exit', 'pnl', 'status', 'ON', 'type',
+    columns = ['start', 'end', '1min', 'trigger', 'exit', 'pnl', 'status', 'ON', 'type',
                'iSLStatus', 'entry', 'orgSL', 'trailingSL', 'iSL', 'currentTarget',
                'allTargets', 'targetHitCount', 'targetHitPrice']
 
@@ -151,7 +151,7 @@ class TradeTrigger:
         for count, value in enumerate(self.Trade.allTargets, start=1):
             targetStr += f"Target{count}: {value} "
 
-        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime, 'min': self.Trade.min1Break,
+        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime, '1min': self.Trade.min1Break,
                     'trigger': self.Trade.triggerEntryPrice,
                     'exit': self.Trade.exit, 'pnl': self.Trade.pnl,
                     'status': self.Trade.tradeStatus, 'ON': self.Trade.tradeOn, 'type': self.Trade.buySell,
