@@ -279,7 +279,7 @@ class TradeTrigger:
         data5 = self.TradeInd.newSignalData[time5].data
         data5 = data5.reset_index()
 
-        high, low = self.getPreviousIRB(lookBack=2, tsl=True)
+        high, low = self.getPreviousIRB(lookBack=2, tsl=True, irb=False)
 
         if self.Trade.buySell == 'BUY' and low != 0:
             self.Trade.trailingSL = low
@@ -291,7 +291,7 @@ class TradeTrigger:
         time5 = '5m'
         data5 = self.TradeInd.newSignalData[time5].data
 
-        if tsl:
+        if not irb:
             low = data5.iloc[-2]['Low']
             high = data5.iloc[-2]['High']
         else:
