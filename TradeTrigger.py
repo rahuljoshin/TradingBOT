@@ -187,11 +187,12 @@ class TradeTrigger:
 
         last_result = last_result.lower()
         close = data5.iloc[-2]['Close']
+        vwap = data5.iloc[-2]['VWAP']
 
-        if 'buy' in last_result:
+        if 'buy' in last_result and close > vwap:
             self.setBuyTrade(close=close)
 
-        if 'sell' in last_result:
+        if 'sell' in last_result and close < vwap:
             self.setSellTrade(close=close)
 
     def setBuyTrade(self, close):
