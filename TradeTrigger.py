@@ -447,15 +447,17 @@ class TradeTrigger:
 
         if self.Trade.entry > 0 and self.Trade.orgStopLoss > 0:
 
-            if ((self.Trade.buySell == 'BUY') and (self.Trade.recent1minClose > self.Trade.entry)
-                    and not self.Trade.min1Break):
+            if (self.Trade.buySell == 'BUY') and (self.Trade.recent1minClose > self.Trade.entry):
                 self.Trade.min1Break = True
                 self.Trade.min1BreakTime = getISTTimeNow()
+            else:
+                self.Trade.min1Break = False
 
-            if ((self.Trade.buySell == 'SELL') and (self.Trade.recent1minClose < self.Trade.entry)
-                    and not self.Trade.min1Break):
+            if (self.Trade.buySell == 'SELL') and (self.Trade.recent1minClose < self.Trade.entry):
                 self.Trade.min1Break = True
                 self.Trade.min1BreakTime = getISTTimeNow()
+            else:
+                self.Trade.min1Break = False
 
             if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low'], self.Trade.recent5minClose):
 
