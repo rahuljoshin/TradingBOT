@@ -124,16 +124,18 @@ class TradeTrigger:
 
         message = f"{message}\n Trade On: {self.Trade.tradeOn}"
 
-        message = f"{message}\n Trade start: {self.Trade.startTime}, Trade end: {self.Trade.endTime}"
-        message = f"{message}\n Trigger Price: {self.Trade.triggerEntryPrice}, Exit: {self.Trade.exit} PNL: {self.Trade.pnl}"
-        message = f"{message}\n Type: {self.Trade.buySell}, Trade status: {self.Trade.tradeStatus}, iSL status: {self.Trade.iSLStatus}"
-        message = f"{message}\n Entry: {self.Trade.entry}, Pivot Dynamic Target: {self.Trade.pivotTarget}"
+        if self.Trade.entry > 0:
 
-        message = f"{message}\n OrgSL: {self.Trade.orgStopLoss}, Trailing-SL: {self.Trade.trailingSL} i-SL: {self.Trade.iSL}"
+            message = f"{message}\n Trade start: {self.Trade.startTime}, Trade end: {self.Trade.endTime}"
+            message = f"{message}\n Trigger Price: {self.Trade.triggerEntryPrice}, Exit: {self.Trade.exit} PNL: {self.Trade.pnl}"
+            message = f"{message}\n Type: {self.Trade.buySell}, Trade status: {self.Trade.tradeStatus}, iSL status: {self.Trade.iSLStatus}"
+            message = f"{message}\n Entry: {self.Trade.entry}, Pivot Dynamic Target: {self.Trade.pivotTarget}"
 
-        message = f"{message}\n Target Hit Count: {self.Trade.targetHitCount}"
-        message = f"{message}\n Target Hit Price: {self.Trade.targetHitPrice}"
-        message = f"{message}\n Current Target: {self.Trade.pivotTarget}"
+            message = f"{message}\n OrgSL: {self.Trade.orgStopLoss}, Trailing-SL: {self.Trade.trailingSL} i-SL: {self.Trade.iSL}"
+
+            message = f"{message}\n Target Hit Count: {self.Trade.targetHitCount}"
+            message = f"{message}\n Target Hit Price: {self.Trade.targetHitPrice}"
+            message = f"{message}\n Current Target: {self.Trade.pivotTarget}"
 
         for count, value in enumerate(self.Trade.allTargets, start=1):
             message += f"Target{count}: {value} "
