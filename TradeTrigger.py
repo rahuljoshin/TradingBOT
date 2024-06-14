@@ -452,12 +452,14 @@ class TradeTrigger:
                 self.Trade.min1BreakTime = getISTTimeNow()
             else:
                 self.Trade.min1Break = False
+                self.Trade.min1BreakTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
 
             if (self.Trade.buySell == 'SELL') and (self.Trade.recent1minClose < self.Trade.entry):
                 self.Trade.min1Break = True
                 self.Trade.min1BreakTime = getISTTimeNow()
             else:
                 self.Trade.min1Break = False
+                self.Trade.min1BreakTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
 
             if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low'], self.Trade.recent5minClose):
 
