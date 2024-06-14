@@ -149,7 +149,7 @@ class TradeTrigger:
         for count, value in enumerate(self.Trade.allTargets, start=1):
             targetStr += f"Target{count}: {value} "
 
-        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime, 'min1': self.Trade.min1Break,
+        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime, 'min': self.Trade.min1Break,
                     'trigger': self.Trade.triggerEntryPrice,
                     'exit': self.Trade.exit, 'pnl': self.Trade.pnl,
                     'status': self.Trade.tradeStatus, 'ON': self.Trade.tradeOn, 'type': self.Trade.buySell,
@@ -163,7 +163,7 @@ class TradeTrigger:
         for index, record in self.tradeBook.iterrows():
             logger.info(
                 f"Trade#: {index}\n ON: {record['ON']} Status: {record['status']} iSL Status: {record['iSLStatus']} Type: {record['type']} "
-                f"\nStart Time: {record['start']} End Time:{record['end']} Min1Break:{record['min1']}"
+                f"\nStart Time: {record['start']} End Time:{record['end']} Min1Break:{record['min']}"
                 f"\nEntry Price: {record['trigger']} Exit Price: {record['exit']} PNL:{record['pnl']}"
                 f"\nEntry Price: {record['entry']} ORG SL: {record['orgSL']} Trailing SL:{record['trailingSL']} "
                 f"\niSL:{record['iSL']} Current Target: {record['currentTarget']}"
