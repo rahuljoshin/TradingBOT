@@ -165,7 +165,7 @@ class TradeTrigger:
         for index, record in self.tradeBook.iterrows():
             logger.info(
                 f"Trade#: {index}\n ON: {record['ON']} Status: {record['status']} iSL Status: {record['iSLStatus']} Type: {record['type']} "
-                f"\nStart Time: {record['start']} End Time:{record['end']} Min1Break:{record['min']}"
+                f"\nStart Time: {record['start']} End Time:{record['end']} Min1Break:{record['1min']}"
                 f"\nEntry Price: {record['trigger']} Exit Price: {record['exit']} PNL:{record['pnl']}"
                 f"\nEntry Price: {record['entry']} ORG SL: {record['orgSL']} Trailing SL:{record['trailingSL']} "
                 f"\niSL:{record['iSL']} Current Target: {record['currentTarget']}"
