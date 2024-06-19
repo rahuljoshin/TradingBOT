@@ -10,7 +10,7 @@ from TelgramCom import TemBot
 class Trade:
     startTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
     endTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
-    min1BreakTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
+    #min1BreakTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
     entry = -1.0
     exit = -1.0
     pnl = 0.0
@@ -33,7 +33,7 @@ class Trade:
     earlyExit = False
 
     buySell = 'WAIT'
-    min1Break = False
+    #min1Break = False
 
     tradeStatus = 'Not Triggered'
 
@@ -43,7 +43,7 @@ class Trade:
     def reset(self):
         self.startTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
         self.endTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
-        self.min1BreakTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
+        #self.min1BreakTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
         self.entry = -1.0
         self.exit = -1.0
         self.pnl = 0.0
@@ -65,7 +65,7 @@ class Trade:
         self.rr13 = -1.0
         self.rr14 = -1.0
         self.buySell = 'WAIT'
-        self.min1Break = False
+        #self.min1Break = False
         self.earlyExit = False
         self.tradeStatus = 'Not Triggered'
 
@@ -73,7 +73,7 @@ class Trade:
 class TradeTrigger:
     Trade = Trade()
     TradeInd = Indicator()
-    columns = ['start', 'end', '1min', 'trigger', 'exit', 'pnl', 'status', 'ON', 'type',
+    columns = ['start', 'end', 'trigger', 'exit', 'pnl', 'status', 'ON', 'type',
                'iSLStatus', 'entry', 'orgSL', 'trailingSL', 'iSL', 'currentTarget',
                'allTargets', 'targetHitCount', 'targetHitPrice']
 
@@ -92,7 +92,7 @@ class TradeTrigger:
         if not self.Trade.tradeOn:
             self.TradeInd = ind
 
-            if not self.isTradeTriggered() and not self.Trade.min1Break:
+            if not self.isTradeTriggered():
                 self.reset()
 
                 self.setEntrySLTarget()
@@ -116,8 +116,8 @@ class TradeTrigger:
 
         message = f"{message}\n Last 1 MIN Close: {self.Trade.recent1minClose}, Last 5 MIN Close: {self.Trade.recent5minClose}"
 
-        if self.Trade.min1Break:
-            message = f"{message}\n *** 1 Min Break at : {self.Trade.min1BreakTime} ***"
+        #if self.Trade.min1Break:
+        #    message = f"{message}\n *** 1 Min Break at : {self.Trade.min1BreakTime} ***"
 
         if self.Trade.earlyExit:
             message = f"{message}\n $$$ Early Exit HIT $$$"
@@ -151,7 +151,7 @@ class TradeTrigger:
         for count, value in enumerate(self.Trade.allTargets, start=1):
             targetStr += f"Target{count}: {value} "
 
-        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime, '1min': self.Trade.min1Break,
+        new_row1 = {'start': self.Trade.startTime, 'end': self.Trade.endTime,
                     'trigger': self.Trade.triggerEntryPrice,
                     'exit': self.Trade.exit, 'pnl': self.Trade.pnl,
                     'status': self.Trade.tradeStatus, 'ON': self.Trade.tradeOn, 'type': self.Trade.buySell,
@@ -164,8 +164,9 @@ class TradeTrigger:
         logger.info("TradeBook Start")
         for index, record in self.tradeBook.iterrows():
             logger.info(
-                f"Trade#: {index}\n ON: {record['ON']} Status: {record['status']} iSL Status: {record['iSLStatus']} Type: {record['type']} "
-                f"\nStart Time: {record['start']} End Time:{record['end']} Min1Break:{record['1min']}"
+                f"Trade#: {index}\n ON: {record['ON']} Status: {record['status']} iSL Status: {record['iSLStatus']} "
+                f" Type: {record['type']} "
+                f"\nStart Time: {record['start']} End Time:{record['end']} "
                 f"\nEntry Price: {record['trigger']} Exit Price: {record['exit']} PNL:{record['pnl']}"
                 f"\nEntry Price: {record['entry']} ORG SL: {record['orgSL']} Trailing SL:{record['trailingSL']} "
                 f"\niSL:{record['iSL']} Current Target: {record['currentTarget']}"
@@ -449,7 +450,7 @@ class TradeTrigger:
         self.Trade.recent5minClose = data5.iloc[-2]['Close']
 
         if self.Trade.entry > 0 and self.Trade.orgStopLoss > 0:
-
+            '''
             if (self.Trade.buySell == 'BUY') and (self.Trade.recent1minClose > self.Trade.entry):
                 self.Trade.min1Break = True
                 self.Trade.min1BreakTime = getISTTimeNow()
@@ -463,6 +464,7 @@ class TradeTrigger:
             else:
                 self.Trade.min1Break = False
                 self.Trade.min1BreakTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
+            '''
 
             if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low'], self.Trade.recent5minClose):
 

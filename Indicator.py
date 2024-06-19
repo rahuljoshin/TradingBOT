@@ -618,15 +618,15 @@ class Indicator:
                   (bndata['GOLDLOW'] < bndata['High'])))
         )
 
-        bndata['VWAPBAR'] = (((bndata['Low'] < bndata['VWAP']) & (bndata['VWAP'] < bndata['High']))
-                             &
-                             (bndata['IRBLONG'] | bndata['IRBSHORT'])
-                             )
+        bndata['VWAPBAR'] = ((bndata['Low'] < bndata['VWAP']) & (bndata['VWAP'] < bndata['High']))
+                             #&
+                             #(bndata['IRBLONG'] | bndata['IRBSHORT'])
+                             #)
 
         bndata['PVWAPBAR'] = ((bndata['Low'] < ((2 * bndata['GOLD']) - bndata['VWAP'])) &
                               (((2 * bndata['GOLD']) - bndata['VWAP']) < bndata['High'])
-                              &
-                              (bndata['IRBLONG'] | bndata['IRBSHORT'])
+                              #&
+                              #(bndata['IRBLONG'] | bndata['IRBSHORT'])
                               )
 
     @staticmethod
