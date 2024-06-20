@@ -199,7 +199,7 @@ class TradeTrigger:
     def setBuyTrade(self, close):
         # get last candle for the 5 min with IRB buy or sell
         self.Trade.buySell = 'BUY'
-        high, low = self.getPreviousIRB(lookBack=2, tsl=True)
+        high, low = self.getPreviousIRB(lookBack=2)
 
         if high != 0:
             self.Trade.entry = high
@@ -209,7 +209,7 @@ class TradeTrigger:
     def setSellTrade(self, close):
         # get last candle for the 5 min with IRB buy or sell
         self.Trade.buySell = 'SELL'
-        high, low = self.getPreviousIRB(lookBack=2, tsl=True)
+        high, low = self.getPreviousIRB(lookBack=2)
 
         if high != 0:
             self.Trade.entry = low
@@ -450,21 +450,6 @@ class TradeTrigger:
         self.Trade.recent5minClose = data5.iloc[-2]['Close']
 
         if self.Trade.entry > 0 and self.Trade.orgStopLoss > 0:
-            '''
-            if (self.Trade.buySell == 'BUY') and (self.Trade.recent1minClose > self.Trade.entry):
-                self.Trade.min1Break = True
-                self.Trade.min1BreakTime = getISTTimeNow()
-            else:
-                self.Trade.min1Break = False
-                self.Trade.min1BreakTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
-
-            if (self.Trade.buySell == 'SELL') and (self.Trade.recent1minClose < self.Trade.entry):
-                self.Trade.min1Break = True
-                self.Trade.min1BreakTime = getISTTimeNow()
-            else:
-                self.Trade.min1Break = False
-                self.Trade.min1BreakTime = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
-            '''
 
             if self.normalCandle(data5.iloc[-2]['High'], data5.iloc[-2]['Low'], self.Trade.recent5minClose):
 
