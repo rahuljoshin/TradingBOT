@@ -808,6 +808,7 @@ ind = Indicator()
 data = ind.getSignals()
 '''
 
+'''
 from neo_api_client import NeoAPI
 
 
@@ -833,5 +834,65 @@ client.session_2fa(OTP= mpin)
 print(client.order_report())
 
 print('Done')
+'''
+
+import pandas as pd
+import yfinance as yf
+
+# Define the path to the Excel file containing NSE stock symbols
+excel_file_path = 'Bullish with IRB, Technical Analysis Scanner.xlsx'
+
+# Read the Excel file
+df = pd.read_excel(excel_file_path)
+
+# Extract the column with stock names
+stock_names = df['Symbol']
 
 
+# Function to check the specified conditions
+def check_conditions(stock_data):
+    if len(stock_data) < 2:
+        return False
+
+    close = stock_data['Close'].iloc[-2]
+    open = stock_data['Open'].iloc[-2]
+    high = stock_data['High'].iloc[-2]
+    low = stock_data['Low'].iloc[-2]
+
+    sma_5 = stock_data['Close'].rolling(window=5).mean().iloc[-2]
+    sma_20 = stock_data['Close'].rolling(window=20).mean().iloc[-2]
+    ema_18 = stock_data['Close'].ewm(span=18, adjust=False).mean().iloc[-2]
+
+    condition1 = ((open - low) > (high - low) * 0.45) and (close > open) and (sma_5 > ema_18) and (close > sma_20) and (
+                close > sma_5)
+    condition2 = ((high - close) > (high - low) * 0.45) and (close > open) and (sma_5 > ema_18) and (
+                close > sma_20) and (close > sma_5)
+    condition3 = ((close - low) > (high - low) * 0.45) and (close < open) and (sma_5 > ema_18) and (
+                close > sma_20) and (close > sma_5)
+    condition4 = ((close - low) > (high - low) * 0.45) and (close < open) and (close > sma_5) and (sma_5 > ema_18) and (
+                close > sma_20)
+
+    return condition1 or condition2 or condition3 or condition4
+
+
+# Initialize an empty list to store the results
+results = []
+
+# Loop through each stock symbol and fetch the data
+for stock in stock_names:
+    stock_info = yf.Ticker(stock + ".NS")  # NSE stocks have the suffix .NS
+    hist = stock_info.history(period="1mo")  # Fetching data for the last month
+
+    # Check the conditions
+    if check_conditions(hist):
+        results.append(stock)
+
+# Print the stocks that meet the conditions
+print("Stocks that meet the conditions:", results)
+
+# Save the results to a new Excel file
+results_df = pd.DataFrame(results, columns=['Stock Name'])
+output_file_path = '/mnt/data/filtered_nse_stocks.xlsx'
+results_df.to_excel(output_file_path, index=False)
+
+print(f"Filtered stock data has been saved to {output_file_path}")

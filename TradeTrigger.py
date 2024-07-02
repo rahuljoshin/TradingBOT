@@ -388,10 +388,8 @@ class TradeTrigger:
 
             if (self.Trade.buySell == 'BUY') and (self.Trade.recent1minClose > self.Trade.pivotTarget):
                 self.handleTargetHit()
-            else:
-                self.trailStopLoss()
 
-            if (self.Trade.buySell == 'SELL') and (self.Trade.recent1minClose < self.Trade.pivotTarget):
+            elif (self.Trade.buySell == 'SELL') and (self.Trade.recent1minClose < self.Trade.pivotTarget):
                 self.handleTargetHit()
             else:
                 self.trailStopLoss()
