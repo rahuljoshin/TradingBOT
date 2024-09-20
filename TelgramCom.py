@@ -5,6 +5,7 @@ from Util import logger
 class TemBot:
     bot_token = '6551575876:AAGRufpscyaxlV6JKgO4hkUEp2AO7eXLJDw'
     chat_id = '-4569429498'  # Replace with your chat ID -4569429498
+
     #chat_id = '1502486402'  # Replace with your chat ID
     url = f'https://api.telegram.org/bot{bot_token}/'
 
