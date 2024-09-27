@@ -55,7 +55,7 @@ def executeRun():
             current_time = getISTTimeNow()
             msg = f"Execute SUCCESS at {current_time}"
             logger.info(msg)
-            bot.sendMessage(msg)
+            #bot.sendMessage(msg)
         else:
             logger.info("STOPPED")
             bot.sendMessage("STOPPED")
