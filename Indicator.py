@@ -76,6 +76,7 @@ class Indicator:
     def execute(self):
         self.calculatePivotLevels()
         self.todayOHLC()
+        self.todayBroadPlan()
         if self.allSignals():
             self.buyorSell()
 
@@ -244,11 +245,11 @@ class Indicator:
             # Concatenate the new DataFrame with the original DataFrame
             self.rData = pd.concat([self.rData, new_df], ignore_index=True)
 
-        message = (f"Result {len(self.rData)} is: {self.rData.iloc[-1]['result']}"
+            message = (f"Result {len(self.rData)} is: {self.rData.iloc[-1]['result']}"
                    f"from {self.rData.iloc[-1]['time']}")
-        bot = TemBot()
-        bot.sendMessage(message)
-        logger.info(message)
+            bot = TemBot()
+            bot.sendMessage(message)
+            logger.info(message)
 
         return result
 
@@ -317,6 +318,17 @@ class Indicator:
 
         logger.info(f"\n Todays# Open:{self.tOpen} High:{self.tHigh} Low:{self.tLow} Close:{self.tClose}")
 
+    def todayBroadPlan(self):
+       #open in R1 and Pivot
+        if (self.r1 > self.tOpen > self.pivot) | (self.phigh > self.tOpen > self.pivot):
+           logger.info(f"\n Todays# Open:{self.tOpen} between R1/PHigh and Pivot")
+
+        if (self.pivot > self.tOpen > self.s1) | (self.pivot > self.tOpen > self.plow):
+            logger.info(f"\n Todays# Open:{self.tOpen} between Pivot and S1/pLow")
+
+
+
+        logger.info(f"\n Todays# Open:{self.tOpen} High:{self.tHigh} Low:{self.tLow} Close:{self.tClose}")
     def calculatePivotLevels(self):
 
         if self.TCPR == 0:
@@ -457,6 +469,8 @@ class Indicator:
         bndata['IRBLONG'], bndata['IRBSHORT'] = IndHelper.findIRB(bndata['Open'], bndata['High'], bndata['Low'],
                                                                   bndata['Close'])
 
+
+
         Indicator.findGoldVWAPBuySell(bndata)
 
         if interval == '5m' or interval == '15m':
@@ -467,10 +481,18 @@ class Indicator:
         # bndata = bndata.fillna(-1)
 
         bndata['BUYORSELL'] = 'WAIT'
+        '''bndata.loc[(bndata['Close'] > bndata['SMA5']) & (bndata['SMA5'] > bndata['EMA18']) & (
+                bndata['Close'] > bndata['SMA20']) & (bndata['EMA18'] > bndata['SMA50']) & (
+                           bndata['SMA5'] > bndata['SMA50']) & (bndata['SMA5'] > bndata['SMA20']) &
+                   (bndata['Close'] > bndata['SMA50']), 'BUYORSELL'] = 'BUY'
+        '''
+
         bndata.loc[(bndata['Close'] > bndata['SMA5']) & (bndata['SMA5'] > bndata['EMA18']) & (
                 bndata['Close'] > bndata['SMA20']) & (bndata['EMA18'] > bndata['SMA50']) & (
                            bndata['SMA5'] > bndata['SMA50']) & (bndata['SMA5'] > bndata['SMA20']) &
                    (bndata['Close'] > bndata['SMA50']), 'BUYORSELL'] = 'BUY'
+
+
         bndata.loc[(bndata['Close'] < bndata['SMA5']) & (bndata['SMA5'] < bndata['EMA18']) & (
                 bndata['Close'] < bndata['SMA20']) & (bndata['EMA18'] < bndata['SMA50']) & (
                            bndata['SMA5'] < bndata['SMA50']) & (bndata['SMA5'] < bndata['SMA20']) &

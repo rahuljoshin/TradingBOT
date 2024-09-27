@@ -481,16 +481,64 @@ data = get_history(symbol=stock_symbol, end=end_date, start=end_date, index=Fals
 print(data)'''
 import yfinance as yf
 import pandas as pd
-import ta
+import ta as lib
 
-'''
+#import pandas as pd
+import numpy as np
+def calculate_atr(data, period=9):
+    data['H-L'] = data['High'] - data['Low']
+    data['H-PC'] = abs(data['High'] - data['Close'].shift(1))
+    data['L-PC'] = abs(data['Low'] - data['Close'].shift(1))
+
+    data['TR'] = data[['H-L', 'H-PC', 'L-PC']].max(axis=1)
+    atr = data['TR'].rolling(window=period, min_periods=1).mean()
+    return atr
+
+
+def SuperTrend(df, period=9, multiplier=1):
+    atr = calculate_atr(df, period)
+    hl2 = (df['High'] + df['Low']) / 2
+    upperband = hl2 + (multiplier * atr)
+    lowerband = hl2 - (multiplier * atr)
+
+    final_upperband = upperband.copy()
+    final_lowerband = lowerband.copy()
+
+    for i in range(1, len(df)):
+        if df['Close'][i - 1] > final_upperband[i - 1]:
+            final_upperband[i] = max(upperband[i], final_upperband[i - 1])
+        else:
+            final_upperband[i] = upperband[i]
+
+        if df['Close'][i - 1] < final_lowerband[i - 1]:
+            final_lowerband[i] = min(lowerband[i], final_lowerband[i - 1])
+        else:
+            final_lowerband[i] = lowerband[i]
+
+    supertrend = pd.Series(index=df.index)
+    for i in range(len(df)):
+        if df['Close'][i] <= final_upperband[i]:
+            supertrend[i] = final_upperband[i]
+        else:
+            supertrend[i] = final_lowerband[i]
+
+    df['SuperTrend'] = supertrend
+    return df
+
 from Banknifty import BankniftyCls
 bank = BankniftyCls()
 
+interval = '5m'
+bndata = bank.get_BNData(interval=interval, period='5d')
 
-bn_ticker = '^NSEBANK'
-df = bank.get_BNData(period='2d')
 
+
+SuperTrend(bndata)
+
+
+
+
+'''
 # Calculate RSI
 #df['RSI'] = ta.momentum.rsi(close=df['Close'], window=9)
 

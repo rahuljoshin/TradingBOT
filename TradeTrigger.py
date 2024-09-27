@@ -143,7 +143,8 @@ class TradeTrigger:
         message = f"{message}\n-------------------------------------"
 
         logger.info(message)
-        self.bot.sendMessage(message)
+        if self.Trade.entry > 0:
+            self.bot.sendMessage(message)
 
     def recordTrade(self):
 
@@ -177,7 +178,7 @@ class TradeTrigger:
 
         self.tradeBook.to_csv('tradebook.csv', header=True, index=True)
 
-    # this function will decide the entry point
+    # this function will decide the entry pointƒ
 
     def setEntrySLTarget(self):
         # get last candle for the 5 min with IRB buy or sell
@@ -529,6 +530,7 @@ class TradeTrigger:
         data5 = self.TradeInd.newSignalData[time5].data
         data5 = data5.reset_index()
         self.Trade.recent5minClose = data5.iloc[-2]['Close']
+
         if self.Trade.tradeOn:
             if self.Trade.buySell == 'BUY':
 
