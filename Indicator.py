@@ -331,7 +331,7 @@ class Indicator:
         logger.info(f"\n Todays# Open:{self.tOpen} High:{self.tHigh} Low:{self.tLow} Close:{self.tClose}")
     def calculatePivotLevels(self):
 
-        if self.TCPR == 0:
+        if self.TCPR > 1:
             logger.info("Calculating pivot level")
             bank = BankniftyCls()
             data = bank.get_Candle(period='5d', interval='1d', latest=False)
