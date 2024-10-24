@@ -76,7 +76,7 @@ class Indicator:
     def execute(self):
         self.calculatePivotLevels()
         self.todayOHLC()
-        self.todayBroadPlan()
+        #self.todayBroadPlan()
         if self.allSignals():
             self.buyorSell()
 
