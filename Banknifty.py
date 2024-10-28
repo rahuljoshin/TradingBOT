@@ -30,6 +30,13 @@ class BankniftyCls:
 
         # Calculate the cumulative sum of (price * volume) and volume
         bnData['Price'] = (bnData['High'] + bnData['Low']) / 2
+
+        # Ensure Price and Volume are single-column Series
+        bnData['Price'] = bnData['Price'].iloc[:, 0] if isinstance(bnData['Price'], pd.DataFrame) else bnData['Price']
+        bnData['Volume'] = bnData['Volume'].iloc[:, 0] if isinstance(bnData['Volume'], pd.DataFrame) else bnData[
+            'Volume']
+
+        # Calculate Price_times_Volume
         bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
 
         #bnData['Price_times_Volume'] = bnData['Price'].iloc[:, 0] * bnData['Volume'].iloc[:, 0]
