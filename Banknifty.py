@@ -30,7 +30,9 @@ class BankniftyCls:
 
         # Calculate the cumulative sum of (price * volume) and volume
         bnData['Price'] = (bnData['High'] + bnData['Low']) / 2
-        bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
+        #bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
+        bnData['Price_times_Volume'] = bnData['Price'].iloc[:, 0] * bnData['Volume'].iloc[:, 0]
+
 
         criteria = bnData.index.strftime('%Y-%m-%d')
 
