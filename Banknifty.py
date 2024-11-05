@@ -24,31 +24,31 @@ class BankniftyCls:
 
         substring = 'Volume'
 
-        # Step-by-step volume calculation to ensure a single Series
+        # Identify and sum columns that contain the substring
         volume_columns = [col for col in df.columns if substring in col]
+
+        # Sum across the specified columns and assign directly as a Series
         bnData['Volume'] = df[volume_columns].sum(axis=1)
 
-        # Convert index to datetime for time-series compatibility
+        # Double-check that 'Volume' is now a Series
+        bnData['Volume'] = bnData['Volume'].squeeze()  # Convert to Series if it's still a single-column DataFrame
+
+        # Ensure the index is in datetime format
         bnData.index = pd.to_datetime(bnData.index)
 
-        # Calculate average Price
+        # Calculate average Price from 'High' and 'Low' columns
         bnData['Price'] = (bnData['High'] + bnData['Low']) / 2
 
-        # Confirm if Price and Volume are single-column Series
+        # Confirm that 'Price' is a single-column Series as well
         if isinstance(bnData['Price'], pd.DataFrame):
-            # Take the first column if it's still a DataFrame
             bnData['Price'] = bnData['Price'].iloc[:, 0]
 
-        if isinstance(bnData['Volume'], pd.DataFrame):
-            # Take the first column if it's still a DataFrame
-            bnData['Volume'] = bnData['Volume'].iloc[:, 0]
+        # Now calculate 'Price_times_Volume'
+        bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
 
-        # Debug: Print data types to confirm they are Series
+        # Debugging: Print final types to ensure they're correct
         print("Type of Price:", type(bnData['Price']))
         print("Type of Volume:", type(bnData['Volume']))
-
-        # Calculate Price_times_Volume now that we are sure they are Series
-        bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
 
         #bnData['Price_times_Volume'] = bnData['Price'].iloc[:, 0] * bnData['Volume'].iloc[:, 0]
 
