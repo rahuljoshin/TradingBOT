@@ -23,9 +23,13 @@ class BankniftyCls:
             df = yf.download(tickers=self.banknifty_Stocks, start=start, end=end,interval=interval)
 
         substring = 'Volume'
+        volume_columns = [col for col in df.columns if substring in col]
+
+        bnData['Price_times_Volume'] = ((bnData['High'] + bnData['Low']) / 2) * df[volume_columns].sum(axis=1)
+        bnData.index = pd.to_datetime(bnData.index)
 
         # Identify and sum columns matching substring to calculate Volume
-        volume_columns = [col for col in df.columns if substring in col]
+        '''volume_columns = [col for col in df.columns if substring in col]
         bnData['Volume'] = df[volume_columns].sum(axis=1)
 
         # Convert Volume to a Series if it's still a DataFrame
@@ -50,8 +54,7 @@ class BankniftyCls:
 
         # Calculate Price_times_Volume
         bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
-
-
+        '''
 
         criteria = bnData.index.strftime('%Y-%m-%d')
 
