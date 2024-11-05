@@ -43,15 +43,12 @@ class BankniftyCls:
         if isinstance(bnData['Price'], pd.DataFrame):
             bnData['Price'] = bnData['Price'].iloc[:, 0]
 
-        # Now calculate 'Price_times_Volume'
-        bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
-
         # Debugging: Print final types to ensure they're correct
         print("Type of Price:", type(bnData['Price']))
         print("Type of Volume:", type(bnData['Volume']))
 
-        #bnData['Price_times_Volume'] = bnData['Price'].iloc[:, 0] * bnData['Volume'].iloc[:, 0]
-
+        # Now calculate 'Price_times_Volume'
+        bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
 
         criteria = bnData.index.strftime('%Y-%m-%d')
 
