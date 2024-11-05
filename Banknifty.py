@@ -24,31 +24,29 @@ class BankniftyCls:
 
         substring = 'Volume'
 
-        # Identify and sum columns that contain the substring
+        # Sum columns that match the substring and convert to Series explicitly
         volume_columns = [col for col in df.columns if substring in col]
-
-        # Sum across the specified columns and assign directly as a Series
         bnData['Volume'] = df[volume_columns].sum(axis=1)
 
-        # Double-check that 'Volume' is now a Series
-        bnData['Volume'] = bnData['Volume'].squeeze()  # Convert to Series if it's still a single-column DataFrame
+        # Force 'Volume' to be a Series by reassigning with `pd.Series`
+        bnData['Volume'] = pd.Series(bnData['Volume'].values, index=bnData.index, name="Volume")
 
-        # Ensure the index is in datetime format
+        # Confirm index is in datetime format
         bnData.index = pd.to_datetime(bnData.index)
 
-        # Calculate average Price from 'High' and 'Low' columns
+        # Calculate average Price and ensure it is a single-column Series
         bnData['Price'] = (bnData['High'] + bnData['Low']) / 2
-
-        # Confirm that 'Price' is a single-column Series as well
         if isinstance(bnData['Price'], pd.DataFrame):
             bnData['Price'] = bnData['Price'].iloc[:, 0]
 
-        # Debugging: Print final types to ensure they're correct
+        # Debugging: Confirm types
         print("Type of Price:", type(bnData['Price']))
         print("Type of Volume:", type(bnData['Volume']))
 
-        # Now calculate 'Price_times_Volume'
+        # Calculate Price_times_Volume
         bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
+
+
 
         criteria = bnData.index.strftime('%Y-%m-%d')
 
