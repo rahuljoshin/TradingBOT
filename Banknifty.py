@@ -24,20 +24,26 @@ class BankniftyCls:
 
         substring = 'Volume'
 
-        bnData['Volume'] = df[[col for col in df.columns if substring in col]].sum(axis=1)
+        # Sum columns containing the specific substring to get Volume
+        volume_columns = [col for col in df.columns if substring in col]
+        bnData['Volume'] = df[volume_columns].sum(axis=1)
 
+        # Ensure index is datetime for time-series compatibility
         bnData.index = pd.to_datetime(bnData.index)
 
-        # Calculate the cumulative sum of (price * volume) and volume
+        # Calculate average Price from High and Low columns
         bnData['Price'] = (bnData['High'] + bnData['Low']) / 2
 
-        # Convert Price to a single-column Series if it's multi-column
+        # Ensure Price and Volume are single-column Series
         if isinstance(bnData['Price'], pd.DataFrame):
             bnData['Price'] = bnData['Price'].iloc[:, 0]
 
-        # Convert Volume to a single-column Series if it's multi-column
         if isinstance(bnData['Volume'], pd.DataFrame):
             bnData['Volume'] = bnData['Volume'].iloc[:, 0]
+
+        # Check again that Price and Volume are single-column Series
+        bnData['Price'] = bnData['Price'].squeeze()
+        bnData['Volume'] = bnData['Volume'].squeeze()
 
         # Calculate Price_times_Volume
         bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
