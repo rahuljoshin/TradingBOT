@@ -24,24 +24,29 @@ class BankniftyCls:
 
         substring = 'Volume'
 
-        # Sum columns that match the substring and convert to a 1D Series
+        # Identify and sum columns matching substring to calculate Volume
         volume_columns = [col for col in df.columns if substring in col]
         bnData['Volume'] = df[volume_columns].sum(axis=1)
 
-        # Flatten to 1D and force 'Volume' to be a Series
-        bnData['Volume'] = pd.Series(bnData['Volume'].values.ravel(), index=bnData.index, name="Volume")
+        # Convert Volume to a Series if it's still a DataFrame
+        if isinstance(bnData['Volume'], pd.DataFrame):
+            bnData['Volume'] = bnData['Volume'].iloc[:, 0]  # Take the first column
 
-        # Ensure index is in datetime format
+        # Convert index to datetime for time-series compatibility
         bnData.index = pd.to_datetime(bnData.index)
 
-        # Calculate average Price from 'High' and 'Low' columns and ensure it’s a Series
+        # Calculate average Price from High and Low columns
         bnData['Price'] = (bnData['High'] + bnData['Low']) / 2
-        if isinstance(bnData['Price'], pd.DataFrame):
-            bnData['Price'] = bnData['Price'].iloc[:, 0]
 
-        # Debugging: Confirm types
-        print("Type of Price:", type(bnData['Price']))
-        print("Type of Volume:", type(bnData['Volume']))
+        # Convert Price to a Series if it's still a DataFrame
+        if isinstance(bnData['Price'], pd.DataFrame):
+            bnData['Price'] = bnData['Price'].iloc[:, 0]  # Take the first column
+
+        # Debugging: Print shapes and first few values to verify
+        print("Shape of Price:", bnData['Price'].shape)
+        print("Shape of Volume:", bnData['Volume'].shape)
+        print("First few entries of Price:", bnData['Price'].head())
+        print("First few entries of Volume:", bnData['Volume'].head())
 
         # Calculate Price_times_Volume
         bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
