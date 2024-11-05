@@ -24,17 +24,17 @@ class BankniftyCls:
 
         substring = 'Volume'
 
-        # Sum columns that match the substring and convert to Series explicitly
+        # Sum columns that match the substring and convert to a 1D Series
         volume_columns = [col for col in df.columns if substring in col]
         bnData['Volume'] = df[volume_columns].sum(axis=1)
 
-        # Force 'Volume' to be a Series by reassigning with `pd.Series`
-        bnData['Volume'] = pd.Series(bnData['Volume'].values, index=bnData.index, name="Volume")
+        # Flatten to 1D and force 'Volume' to be a Series
+        bnData['Volume'] = pd.Series(bnData['Volume'].values.ravel(), index=bnData.index, name="Volume")
 
-        # Confirm index is in datetime format
+        # Ensure index is in datetime format
         bnData.index = pd.to_datetime(bnData.index)
 
-        # Calculate average Price and ensure it is a single-column Series
+        # Calculate average Price from 'High' and 'Low' columns and ensure it’s a Series
         bnData['Price'] = (bnData['High'] + bnData['Low']) / 2
         if isinstance(bnData['Price'], pd.DataFrame):
             bnData['Price'] = bnData['Price'].iloc[:, 0]
