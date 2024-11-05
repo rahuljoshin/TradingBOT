@@ -1,8 +1,8 @@
 pip
 yfinance
---upgrade pandas
+pandas
 pandas_ta
---upgrade numpy
+numpy
 requests
 matplotlib
 ta
