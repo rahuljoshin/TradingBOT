@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import date
 from datetime import timedelta
 
+
 class BankniftyCls:
     banknifty_Stocks = ["BANDHANBNK.NS", "RBLBANK.NS", "BANKBARODA.NS", "PNB.NS", "ICICIBANK.NS", "SBIN.NS",
                         "IDFCFIRSTB.NS", "AXISBANK.NS", "INDUSINDBK.NS", "HDFCBANK.NS", "KOTAKBANK.NS", "AUBANK.NS"]
@@ -19,41 +20,52 @@ class BankniftyCls:
             bnData = yf.download(tickers=self.bn_ticker, interval=interval, period=period, start=start, end=end)
             df = yf.download(tickers=self.banknifty_Stocks, interval=interval, period=period, start=start, end=end)
         else:
-            bnData = yf.download(tickers=self.bn_ticker, start=start, end=end,interval=interval)
-            df = yf.download(tickers=self.banknifty_Stocks, start=start, end=end,interval=interval)
+            bnData = yf.download(tickers=self.bn_ticker, start=start, end=end, interval=interval)
+            df = yf.download(tickers=self.banknifty_Stocks, start=start, end=end, interval=interval)
 
+        # Define substring for volume columns
         substring = 'Volume'
         volume_columns = [col for col in df.columns if substring in col]
 
-        volData = pd.Series(df[volume_columns].sum(axis=1).squeeze(), index=bnData.index)
+        # Sum up volume columns to create volData
+        volData = pd.Series(df[volume_columns].sum(axis=1).values, index=bnData.index)
 
-        bnData['Price'] = ((bnData['High'] + bnData['Low']) / 2).squeeze()
+        # Calculate average Price in bnData
+        bnData['Price'] = (bnData['High'] + bnData['Low']) / 2
+        bnData['Volume'] = volData
 
-        bnData['Price_times_Volume'] = bnData['Price']*volData
+        # Calculate Price_times_Volume for each row
+        bnData['Price_times_Volume'] = bnData['Price'] * volData
+
+        # Ensure index is datetime
         bnData.index = pd.to_datetime(bnData.index)
-        criteria = bnData.index.strftime('%Y-%m-%d')
 
-        bnData['Cumulative_Price_Volume'] = bnData.groupby(criteria)[['Price_times_Volume']].cumsum()
+        # Use pd.Grouper to group by date in a daily frequency
+        bnData['Cumulative_Price_Volume'] = bnData.groupby(pd.Grouper(freq='D'))['Price_times_Volume'].cumsum()
+        bnData['Cumulative_Volume'] = bnData.groupby(pd.Grouper(freq='D'))['Volume'].cumsum()
 
-        bnData['Cumulative_Volume'] = bnData.groupby(criteria)[['Volume']].cumsum()
-
+        # Calculate VWAP
         bnData['VWAP'] = bnData['Cumulative_Price_Volume'] / bnData['Cumulative_Volume']
 
-        grouped = bnData.groupby(criteria)
+        # Group by each day and get the last entry of each day (safely)
+        latest_daily_entries = bnData.groupby(pd.Grouper(freq='D')).apply(lambda x: x.iloc[-1] if not x.empty else None)
 
-        second_last_records = grouped.apply(lambda x: x.iloc[-1])
+        # Drop any None values (if there were any empty groups)
+        latest_daily_entries = latest_daily_entries.dropna()
 
-        second_last_records = second_last_records.reset_index()
-        length = len(second_last_records) - 2
+        # Reset index for display (optional)
+        latest_daily_entries = latest_daily_entries.reset_index()
 
-        if length >= 0:
-            vwapLast = second_last_records.loc[length, 'VWAP']
+        # Check if there are enough records to proceed
+        if len(latest_daily_entries) > 1:
+            vwapLast = latest_daily_entries.iloc[-2]['VWAP']  # Second last record
+            # Assuming self.vwapGoldenLevels is defined elsewhere and returns three values
             bnData['GOLDUP'], bnData['GOLD'], bnData['GOLDLOW'] = self.vwapGoldenLevels(vwapLast, bnData['VWAP'])
         else:
             bnData['GOLDUP'], bnData['GOLD'], bnData['GOLDLOW'] = '', '', ''
 
+        # Format the index and round values for final output
         bnData.index = bnData.index.strftime('%Y-%m-%d %H:%M:%S')
-
         bnData = bnData.round(2)
         return bnData
 
@@ -90,9 +102,9 @@ class BankniftyCls:
 
         # Set the sequential index
         bndata.index = index_sequence
-        #bndata.index = pd.to_datetime(bndata.index)
-        #bndata.index = bndata.index.strftime('%Y-%m-%d %H:%M:%S')
-        #bndata.index = bndata.reset_index()
+        # bndata.index = pd.to_datetime(bndata.index)
+        # bndata.index = bndata.index.strftime('%Y-%m-%d %H:%M:%S')
+        # bndata.index = bndata.reset_index()
 
         bndata = bndata.round(2)
         return bndata
@@ -103,7 +115,7 @@ class BankniftyCls:
 
         yDayVWAP = dataYDay[['VWAP', 'Close', 'Volume']].tail(1)
         yDayVWAP = yDayVWAP.reset_index()
-        assert(len(yDayVWAP))
+        assert (len(yDayVWAP))
         vwapLast = yDayVWAP.loc[0, 'VWAP']
 
         return vwapLast
