@@ -65,7 +65,7 @@ class BankniftyCls:
             bnData['GOLDUP'], bnData['GOLD'], bnData['GOLDLOW'] = '', '', ''
 
         # Format the index and round values for final output
-        bnData.index = bnData.index.strftime('%Y-%m-%d %H:%M:%S')
+        #bnData.index = bnData.index.strftime('%Y-%m-%d %H:%M:%S')
         bnData = bnData.round(2)
         return bnData
 
