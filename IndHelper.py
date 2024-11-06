@@ -40,13 +40,13 @@ class IndHelper:
     @staticmethod
     def getRSI(close, window=9):
 
-        rsiValues = lib.wrapper.RSIIndicator(close=close.squeeze(), window=window).rsi()
+        rsiValues = lib.wrapper.RSIIndicator(close=close.squeeze(), window=window,fillna=True).rsi()
         return rsiValues
 
     @staticmethod
     def getEMA(close, window=9):
 
-        emaValues = lib.wrapper.EMAIndicator(close=close.squeeze(), window=window).ema_indicator()
+        emaValues = lib.wrapper.EMAIndicator(close=close.squeeze(), window=window, fillna=True).ema_indicator()
         return emaValues
 
     @staticmethod

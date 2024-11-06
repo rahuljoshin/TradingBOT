@@ -435,7 +435,7 @@ class Indicator:
         bndata['EMA3_RSI'] = IndHelper.getEMA(bndata['RSI9'], window=3)
 
         # Calculate VWMA with a period of 21 on RSI
-        bndata['VWMA21_RSI'] = Indicator.vwma(bndata['RSI9'], bndata['Volume'], period=21)
+        #bndata['VWMA21_RSI'] = Indicator.vwma(bndata['RSI9'], bndata['Volume'], period=21)
 
         bndata['%K'], bndata['%D'] = IndHelper.getStoch(high=bndata['High'], low=bndata['Low'],
                                                         close=bndata['Close'], window=4, smooth_window=1)
