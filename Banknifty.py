@@ -25,37 +25,12 @@ class BankniftyCls:
         substring = 'Volume'
         volume_columns = [col for col in df.columns if substring in col]
 
-        bnData['Price_times_Volume'] = ((bnData['High'] + bnData['Low']) / 2) * df[volume_columns].sum(axis=1)
+        volData = pd.Series(df[volume_columns].sum(axis=1).squeeze(), index=bnData.index)
+
+        bnData['Price'] = ((bnData['High'] + bnData['Low']) / 2).squeeze()
+
+        bnData['Price_times_Volume'] = bnData['Price']*volData
         bnData.index = pd.to_datetime(bnData.index)
-
-        # Identify and sum columns matching substring to calculate Volume
-        '''volume_columns = [col for col in df.columns if substring in col]
-        bnData['Volume'] = df[volume_columns].sum(axis=1)
-
-        # Convert Volume to a Series if it's still a DataFrame
-        if isinstance(bnData['Volume'], pd.DataFrame):
-            bnData['Volume'] = bnData['Volume'].iloc[:, 0]  # Take the first column
-
-        # Convert index to datetime for time-series compatibility
-        bnData.index = pd.to_datetime(bnData.index)
-
-        # Calculate average Price from High and Low columns
-        bnData['Price'] = (bnData['High'] + bnData['Low']) / 2
-
-        # Convert Price to a Series if it's still a DataFrame
-        if isinstance(bnData['Price'], pd.DataFrame):
-            bnData['Price'] = bnData['Price'].iloc[:, 0]  # Take the first column
-
-        # Debugging: Print shapes and first few values to verify
-        print("Shape of Price:", bnData['Price'].shape)
-        print("Shape of Volume:", bnData['Volume'].shape)
-        print("First few entries of Price:", bnData['Price'].head())
-        print("First few entries of Volume:", bnData['Volume'].head())
-
-        # Calculate Price_times_Volume
-        bnData['Price_times_Volume'] = bnData['Price'] * bnData['Volume']
-        '''
-
         criteria = bnData.index.strftime('%Y-%m-%d')
 
         bnData['Cumulative_Price_Volume'] = bnData.groupby(criteria)[['Price_times_Volume']].cumsum()
