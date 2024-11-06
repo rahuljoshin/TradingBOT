@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import ta as lib
+from ta.trend import PSARIndicator
 import ta.volatility
 
 
@@ -30,8 +31,31 @@ class IndHelper:
         return BBUpperBand, BBLowerBand
 
     @staticmethod
+    def getSAR(high, low, close):
+
+        sarValues = PSARIndicator(high=high.squeeze(), low=low.squeeze(),
+                                  close=close.squeeze())
+        return sarValues
+
+    @staticmethod
+    def getRSI(close, window=9):
+
+        rsiValues = lib.wrapper.RSIIndicator(close=close.squeeze(), window=window).rsi()
+        return rsiValues
+
+    @staticmethod
+    def getEMA(close, window=9):
+
+        emaValues = lib.wrapper.EMAIndicator(close=close.squeeze(), window=window).ema_indicator()
+        return emaValues
+
+    @staticmethod
     def calculateKeltnerChannel(high, low, close, period=20, multiplier=1.5):
         # Calculate True Range (TR)
+        high = high.squeeze()
+        low = low.squeeze()
+        close = close.squeeze()
+
         TR = np.maximum(high - low, abs(high - close.shift(1)),
                         abs(low - close.shift(1)))
 
@@ -61,6 +85,10 @@ class IndHelper:
         spanB_len = 52
         spanB_mult = 6.0
         offset = 26
+
+        high = high.squeeze()
+        low = low.squeeze()
+        close = close.squeeze()
 
         tenkan = IndHelper.avgNew(close, high, low, tenkan_len, tenkan_mult)
         kijun = IndHelper.avgNew(close, high, low, kijun_len, kijun_mult)
@@ -202,7 +230,7 @@ class IndHelper:
     @staticmethod
     def getStoch(high, low, close, window, smooth_window):
 
-        stoch = lib.wrapper.StochasticOscillator(high=high, low=low, close=close,
+        stoch = lib.wrapper.StochasticOscillator(high=high.squeeze(), low=low.squeeze(), close=close.squeeze(),
                                                  window=window, smooth_window=smooth_window)
         return stoch.stoch(), stoch.stoch_signal()
 
@@ -291,15 +319,8 @@ class IndHelper:
         max_val = np.where(IndHelper.ta_cross(src, spt), np.maximum(src, max_val), spt)
         min_val = np.where(IndHelper.ta_cross(src, spt), np.minimum(src, min_val), spt)
 
-        return (max_val + min_val)/2
+        return (max_val + min_val) / 2
 
     @staticmethod
     def ta_cross(a, b):
         return np.logical_and(a > b, a.shift(1) <= b.shift(1))
-
-
-
-
-
-
-

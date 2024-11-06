@@ -7,7 +7,7 @@ from TelgramCom import TemBot
 from datetime import datetime
 from datetime import timedelta
 
-from ta.trend import PSARIndicator
+
 
 
 import heapq
@@ -428,16 +428,11 @@ class Indicator:
         elif interval == '1d':
             bndata = bank.get_BNData(interval=interval, period='1mo')
 
-        # Ensure high, low, and close columns exist and are Series
-        if 'High' in bndata.columns and 'Low' in bndata.columns and 'Close' in bndata.columns:
-            # Instantiate the PSARIndicator with high, low, and close
-            psar_indicator = PSARIndicator(high=bndata['High'], low=bndata['Low'], close=bndata['Close'])
+        bndata['SAR'] = IndHelper.getSAR(high=bndata['High'], low=bndata['Low'],
+                                                        close=bndata['Close'])
 
-            # Calculate PSAR values
-            bndata['SAR'] = psar_indicator.psar()
-
-        bndata['RSI9'] = lib.wrapper.RSIIndicator(close=bndata['Close'], window=9).rsi()
-        bndata['EMA3_RSI'] = lib.wrapper.EMAIndicator(bndata['RSI9'], window=3).ema_indicator()
+        bndata['RSI9'] = IndHelper.getRSI(close=bndata['Close'], window=9)
+        bndata['EMA3_RSI'] = IndHelper.getEMA(bndata['RSI9'], window=3)
 
         # Calculate VWMA with a period of 21 on RSI
         bndata['VWMA21_RSI'] = Indicator.vwma(bndata['RSI9'], bndata['Volume'], period=21)
