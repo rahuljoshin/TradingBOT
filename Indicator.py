@@ -7,6 +7,8 @@ from TelgramCom import TemBot
 from datetime import datetime
 from datetime import timedelta
 
+from ta.trend import PSARIndicator
+
 
 import heapq
 from collections import namedtuple
@@ -426,8 +428,13 @@ class Indicator:
         elif interval == '1d':
             bndata = bank.get_BNData(interval=interval, period='1mo')
 
-        # PSAR, RSI9,3,21 and stocastics
-        bndata['SAR'] = lib.wrapper.PSARIndicator(high=bndata['High'], low=bndata['Low'], close=bndata['Close']).psar()
+        # Ensure high, low, and close columns exist and are Series
+        if 'High' in bndata.columns and 'Low' in bndata.columns and 'Close' in bndata.columns:
+            # Instantiate the PSARIndicator with high, low, and close
+            psar_indicator = PSARIndicator(high=bndata['High'], low=bndata['Low'], close=bndata['Close'])
+
+            # Calculate PSAR values
+            bndata['SAR'] = psar_indicator.psar()
 
         bndata['RSI9'] = lib.wrapper.RSIIndicator(close=bndata['Close'], window=9).rsi()
         bndata['EMA3_RSI'] = lib.wrapper.EMAIndicator(bndata['RSI9'], window=3).ema_indicator()
