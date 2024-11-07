@@ -64,30 +64,6 @@ class IndHelper:
         kUpperBand = ema + (atr * multiplier)
         kLowerBand = ema - (atr * multiplier)
         return kUpperBand, ema, kLowerBand
-        '''
-        high = high.squeeze()
-        low = low.squeeze()
-        close = close.squeeze()
-
-        TR = np.maximum(high - low, abs(high - close.shift(1)),
-                        abs(low - close.shift(1)))
-
-        # Calculate Average True Range (ATR)
-        ATR = TR.ewm(span=period, adjust=False).mean()
-
-        # Calculate the middle line of the Keltner Channel
-        kMiddleLine = close.ewm(span=period, adjust=False).mean()
-        # Calculate the upper and lower bands
-        kUpperBand = kMiddleLine + multiplier * ATR
-        kLowerBand = kMiddleLine - multiplier * ATR
-
-        osc = (kUpperBand - kLowerBand) / close
-        osc_color = np.where(osc < 0, '#00ffff', '#cc00cc')
-
-        # diff = close - ((kMiddleLine + SMA20) / 2)
-        '''
-
-
 
     @staticmethod
     def calcSuperIchi(close, high, low):

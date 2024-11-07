@@ -82,6 +82,7 @@ class BankniftyCls:
     # latest = This is the bool and return the latest candle for the interval
     def get_Candle(self, interval='5m', period='1d', look_back=2, latest=True):
         bndata = yf.download(tickers=self.bn_ticker, interval=interval, period=period)
+        bndata.columns = bndata.columns.get_level_values(0)
         if latest and len(bndata) > 0:
             bndata = bndata.tail(1)
 
