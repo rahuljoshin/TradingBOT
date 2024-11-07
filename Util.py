@@ -18,8 +18,8 @@ def getISTTimeNow():
 
 
 # Set up the logger
-#logger = logging.getLogger('BOT')
-logger = logging.FileHandler('0bot.log')
+logger = logging.getLogger('BOT')
+#logger = logging.FileHandler('0bot.log')
 logger.setLevel(logging.INFO)
 
 # Create a file handler
