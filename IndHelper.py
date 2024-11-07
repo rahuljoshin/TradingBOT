@@ -52,6 +52,19 @@ class IndHelper:
     @staticmethod
     def calculateKeltnerChannel(high, low, close, period=20, multiplier=1.5):
         # Calculate True Range (TR)
+
+        # Calculate the Exponential Moving Average (EMA)
+        ema = close.ewm(span=period, adjust=False).mean()
+
+        # Calculate the Average True Range (ATR)
+        atr = ta.volatility.AverageTrueRange(high=high, low=low, close=close,
+                                                       window=period).average_true_range()
+
+        # Calculate the Keltner Channel Bands
+        kUpperBand = ema + (atr * multiplier)
+        kLowerBand = ema - (atr * multiplier)
+        return kUpperBand, ema, kLowerBand
+        '''
         high = high.squeeze()
         low = low.squeeze()
         close = close.squeeze()
@@ -72,8 +85,9 @@ class IndHelper:
         osc_color = np.where(osc < 0, '#00ffff', '#cc00cc')
 
         # diff = close - ((kMiddleLine + SMA20) / 2)
+        '''
 
-        return kUpperBand, kMiddleLine, kLowerBand
+
 
     @staticmethod
     def calcSuperIchi(close, high, low):

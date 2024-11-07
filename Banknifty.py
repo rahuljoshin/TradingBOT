@@ -20,6 +20,9 @@ class BankniftyCls:
             bnData = yf.download(tickers=self.bn_ticker, start=start, end=end, interval=interval)
             df = yf.download(tickers=self.banknifty_Stocks, start=start, end=end, interval=interval)
 
+        bnData.columns = bnData.columns.get_level_values(0)
+        df.columns = df.columns.get_level_values(0)
+
         volume_columns = [col for col in df.columns if 'Volume' in col]
         collective_volume = df[volume_columns].sum(axis=1)
 
