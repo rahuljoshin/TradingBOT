@@ -57,6 +57,11 @@ class BankniftyCls:
 
         # Format the index and round values for final output
         #bnData.index = bnData.index.strftime('%Y-%m-%d %H:%M:%S')
+        bnData.index = pd.to_datetime(bnData.index)
+        if bnData.index.tz is None:
+            # Convert from UTC to IST (Indian Standard Time, UTC +5:30)
+            bnData.index = bnData.index.tz_localize('UTC').tz_convert('Asia/Kolkata')
+
         bnData = bnData.round(2)
         return bnData
 
