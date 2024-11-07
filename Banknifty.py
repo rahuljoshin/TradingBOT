@@ -13,9 +13,6 @@ class BankniftyCls:
 
     def get_BNData(self, interval='5m', period='1d', start=None, end=None):
 
-        bnData = pd.DataFrame()
-        df = pd.DataFrame()
-
         if start is None:
             bnData = yf.download(tickers=self.bn_ticker, interval=interval, period=period, start=start, end=end)
             df = yf.download(tickers=self.banknifty_Stocks, interval=interval, period=period, start=start, end=end)
@@ -23,42 +20,33 @@ class BankniftyCls:
             bnData = yf.download(tickers=self.bn_ticker, start=start, end=end, interval=interval)
             df = yf.download(tickers=self.banknifty_Stocks, start=start, end=end, interval=interval)
 
-        # Define substring for volume columns
-        substring = 'Volume'
-        volume_columns = [col for col in df.columns if substring in col]
+        volume_columns = [col for col in df.columns if 'Volume' in col]
+        collective_volume = df[volume_columns].sum(axis=1)
 
-        # Sum up volume columns to create volData
-        volData = pd.Series(df[volume_columns].sum(axis=1).values, index=bnData.index)
+        # Align the indices of `bnData` and `collective_volume`
+        collective_volume = collective_volume.reindex(bnData.index, method='nearest')
 
-        # Calculate average Price in bnData
-        bnData['Price'] = (bnData['High'] + bnData['Low']) / 2
-        bnData['Volume'] = volData
+        # Add the collective volume as a new column to `bnData`
+        bnData['Collective_Volume'] = collective_volume
 
-        # Calculate Price_times_Volume for each row
-        bnData['Price_times_Volume'] = bnData['Price'] * volData
+        # Calculate the average of High and Low prices
+        bnData['Avg_High_Low'] = (bnData['High'] + bnData['Low']) / 2
 
-        # Ensure index is datetime
-        bnData.index = pd.to_datetime(bnData.index)
+        # Calculate the price-volume product
+        bnData['Price_Volume_Product'] = bnData['Avg_High_Low'] * bnData['Collective_Volume']
 
-        # Use pd.Grouper to group by date in a daily frequency
-        bnData['Cumulative_Price_Volume'] = bnData.groupby(pd.Grouper(freq='D'))['Price_times_Volume'].cumsum()
-        bnData['Cumulative_Volume'] = bnData.groupby(pd.Grouper(freq='D'))['Volume'].cumsum()
+        # Group by each day to calculate daily VWAP
+        bnData['Daily_Cumulative_Price_Volume'] = bnData.groupby(pd.Grouper(freq='D'))['Price_Volume_Product'].cumsum()
+        bnData['Daily_Cumulative_Volume'] = bnData.groupby(pd.Grouper(freq='D'))['Collective_Volume'].cumsum()
 
-        # Calculate VWAP
-        bnData['VWAP'] = bnData['Cumulative_Price_Volume'] / bnData['Cumulative_Volume']
-
-        # Group by each day and get the last entry of each day (safely)
-        latest_daily_entries = bnData.groupby(pd.Grouper(freq='D')).apply(lambda x: x.iloc[-1] if not x.empty else None)
-
-        # Drop any None values (if there were any empty groups)
-        latest_daily_entries = latest_daily_entries.dropna()
-
-        # Reset index for display (optional)
-        latest_daily_entries = latest_daily_entries.reset_index()
+        # Calculate the daily VWAP
+        bnData['VWAP'] = bnData['Daily_Cumulative_Price_Volume'] / bnData['Daily_Cumulative_Volume']
+        # Extract the last VWAP value for each day
+        daily_vwap = bnData.groupby(bnData.index.date)['VWAP'].last()
 
         # Check if there are enough records to proceed
-        if len(latest_daily_entries) > 1:
-            vwapLast = latest_daily_entries.iloc[-2]['VWAP']  # Second last record
+        if len(daily_vwap) > 1:
+            vwapLast = daily_vwap.iloc[-2]
             # Assuming self.vwapGoldenLevels is defined elsewhere and returns three values
             bnData['GOLDUP'], bnData['GOLD'], bnData['GOLDLOW'] = self.vwapGoldenLevels(vwapLast, bnData['VWAP'])
         else:
