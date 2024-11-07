@@ -34,7 +34,7 @@ class IndHelper:
     def getSAR(high, low, close):
 
         sarValues = PSARIndicator(high=high.squeeze(), low=low.squeeze(),
-                                  close=close.squeeze())
+                                  close=close.squeeze()).psar()
         return sarValues
 
     @staticmethod
