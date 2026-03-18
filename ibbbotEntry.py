@@ -8,7 +8,7 @@ terminate_event = threading.Event()
 from TradeTrigger import TradeTrigger
 from Indicator import Indicator
 
-from OptionTrader import OptionTrader
+#from OptionTrader import OptionTrader
 
 from TelgramCom import TemBot
 from Util import getISTTimeNow
@@ -17,7 +17,7 @@ from Util import logger
 ind = Indicator()
 tradeTrigger = TradeTrigger()
 
-optionTrader = OptionTrader()
+#optionTrader = OptionTrader()
 
 
 def continueExecution():
