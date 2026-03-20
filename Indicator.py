@@ -456,7 +456,7 @@ class Indicator:
 
         #bndata['kUpperBand'], bndata['kMiddleLine'], bndata['kLowerBand'] = (
             #IndHelper.calculateKeltnerChannel(bndata['High'],
-                                              bndata['Low'], bndata['Close'], period=20, multiplier=2))
+                                              #bndata['Low'], bndata['Close'], period=20, multiplier=2))
 
         #bndata['TTMSQ'] = (bndata['BBUpperBand2'] < bndata['kUpperBand']) & (
                 #bndata['BBLowerBand2'] > bndata['kLowerBand'])
