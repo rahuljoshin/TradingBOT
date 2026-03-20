@@ -461,7 +461,7 @@ class Indicator:
         #bndata['TTMSQ'] = (bndata['BBUpperBand2'] < bndata['kUpperBand']) & (
                 #bndata['BBLowerBand2'] > bndata['kLowerBand'])
 
-        bndata['diff'] = bndata['Close'] - ((bndata['kMiddleLine'] + bndata['SMA20']) / 2)
+        #bndata['diff'] = bndata['Close'] - ((bndata['kMiddleLine'] + bndata['SMA20']) / 2)
 
         bndata['tenkan'], bndata['kijun'], bndata['senkouA'], bndata['senkouB'] = IndHelper.calcSuperIchi(
             bndata['Close'],
