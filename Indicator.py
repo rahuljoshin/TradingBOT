@@ -454,12 +454,12 @@ class Indicator:
         bndata['BBUpperBand2'], bndata['BBLowerBand2'] = IndHelper.calBB(bndata['Close'], period=20, stddev=2)
         bndata['BBUpperBand1'], bndata['BBLowerBand1'] = IndHelper.calBB(bndata['Close'], period=20, stddev=1)
 
-        bndata['kUpperBand'], bndata['kMiddleLine'], bndata['kLowerBand'] = (
-            IndHelper.calculateKeltnerChannel(bndata['High'],
+        #bndata['kUpperBand'], bndata['kMiddleLine'], bndata['kLowerBand'] = (
+            #IndHelper.calculateKeltnerChannel(bndata['High'],
                                               bndata['Low'], bndata['Close'], period=20, multiplier=2))
 
-        bndata['TTMSQ'] = (bndata['BBUpperBand2'] < bndata['kUpperBand']) & (
-                bndata['BBLowerBand2'] > bndata['kLowerBand'])
+        #bndata['TTMSQ'] = (bndata['BBUpperBand2'] < bndata['kUpperBand']) & (
+                #bndata['BBLowerBand2'] > bndata['kLowerBand'])
 
         bndata['diff'] = bndata['Close'] - ((bndata['kMiddleLine'] + bndata['SMA20']) / 2)
 
