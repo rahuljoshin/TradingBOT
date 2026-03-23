@@ -8,7 +8,7 @@ terminate_event = threading.Event()
 from TradeTrigger import TradeTrigger
 from Indicator import Indicator
 
-#from OptionTrader import OptionTrader
+# from OptionTrader import OptionTrader
 
 from TelgramCom import TemBot
 from Util import getISTTimeNow
@@ -17,7 +17,8 @@ from Util import logger
 ind = Indicator()
 tradeTrigger = TradeTrigger()
 
-#optionTrader = OptionTrader()
+
+# optionTrader = OptionTrader()
 
 
 def continueExecution():
@@ -31,8 +32,13 @@ def continueExecution():
     return True
 
 
-def executeRun():
+def executeRun(index="NIFTY"):
     bot = TemBot()
+    # index = 'sensex'
+    # ticker = bot.getResponse().lower()
+    # if ticker == 'NIFTY' or ticker == 'BANKNIFTY' or ticker == 'SENSEX':
+    #   index = ticker
+
     if terminate_event.is_set():
         bot.sendMessage("Excute TERMINATED")
         return False
@@ -49,13 +55,13 @@ def executeRun():
 
         if not stop_event.is_set():
 
-            ind.execute()
+            ind.execute(ticker=index)
             tradeTrigger.execute(ind)
-            #optionTrader.execute(tradeTrigger)
+            # optionTrader.execute(tradeTrigger)
             current_time = getISTTimeNow()
             msg = f"Execute SUCCESS at {current_time}"
             logger.info(msg)
-            #bot.sendMessage(msg)
+            # bot.sendMessage(msg)
         else:
             logger.info("STOPPED")
             bot.sendMessage("STOPPED")

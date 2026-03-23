@@ -31,6 +31,14 @@ def executeRun():
                 # Perform your tasks here
                 print("Executing the task...")
 
+                '''
+                ticker = bot.getResponse().lower()
+                if (ticker == 'NIFTY' or ticker == 'BANKNIFTY' or ticker == 'SENSEX'):
+                    ind.execute(ticker)
+                else:
+                    ind.execute()
+                '''
+
                 ind.execute()
 
                 # Update the last execution time
