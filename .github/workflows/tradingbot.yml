@@ -37,7 +37,7 @@ jobs:
           pip install yfinance pandas pandas_ta ta
 
       - name: Execute Python script
-        run: python tradingbot.py
+        run: python tradingbot.py --index ${{ github.event.inputs.index }}
 
       - name: Commit and Push CSV
         run: |
