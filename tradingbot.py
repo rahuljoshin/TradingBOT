@@ -8,7 +8,7 @@ import argparse
 def main():
     # 1. Setup the argument parser
     parser = argparse.ArgumentParser(description="My Trading Bot")
-    parser.add_argument("--index", help="The index to trade (NIFTY, BANKNIFTY, etc.)", default="NIFTY")
+    #parser.add_argument("--index", help="The index to trade (NIFTY, BANKNIFTY, etc.)", default="NIFTY")
 
     # 2. Parse the arguments
     args = parser.parse_args()
