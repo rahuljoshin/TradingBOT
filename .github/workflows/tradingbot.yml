@@ -1,10 +1,17 @@
 name: botRunner
 
 on:
-  #schedule:
-    # This cron expression means "every 5th minute"
-    #- cron: '*/6 * * * *'
-  workflow_dispatch: # Allows you to run it manually for testing
+ workflow_dispatch:
+    inputs:
+      index:
+        description: 'Select the Index to trade'
+        required: true
+        default: 'NIFTY'
+        type: choice
+        options:
+          - NIFTY
+          - BANKNIFTY
+          - SENSEX
 
 # This section is critical to fix the 403 error
 permissions:
