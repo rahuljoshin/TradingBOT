@@ -194,7 +194,7 @@ class Indicator:
         elif weakBuy30min and buy5min:
             result = 'QUICKBUY'
             
-        result = f"{self.ticker}:{result}"
+        
 
 
         if goldenBar:
@@ -246,6 +246,7 @@ class Indicator:
         # goldZoneR = self.checkGoldZone()
         # result = f"{goldZoneR} {result}"
 
+        result = f"{self.ticker}:{result}"
         last_result = self.rData.iloc[-1]['result'] if len(self.rData) else ''
 
         if result != last_result:
