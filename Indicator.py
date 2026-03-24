@@ -239,7 +239,7 @@ class Indicator:
         if buySell5 == buySell30 and buySell5 != 'WAIT':
             result = f"+++STRONG {buySell5} {result}+++"
 
-        # goldZoneR = self.checkGoldZone()
+        # goldZoneR = self.checkGoldZone()##
         # result = f"{goldZoneR} {result}"
 
         last_result = self.rData.iloc[-1]['result'] if len(self.rData) else ''
