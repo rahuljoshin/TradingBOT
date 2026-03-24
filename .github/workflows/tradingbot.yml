@@ -1,10 +1,17 @@
 name: botRunner
 
 on:
-  #schedule:
-    # This cron expression means "every 5th minute"
-    #- cron: '*/6 * * * *'
-  workflow_dispatch: # Allows you to run it manually for testing
+ workflow_dispatch:
+    inputs:
+      index:
+        description: 'Select the Index to trade'
+        required: true
+        default: 'NIFTY'
+        type: choice
+        options:
+          - NIFTY
+          - BANKNIFTY
+          - SENSEX
 
 # This section is critical to fix the 403 error
 permissions:
@@ -30,7 +37,7 @@ jobs:
           pip install yfinance pandas pandas_ta ta
 
       - name: Execute Python script
-        run: python tradingbot.py
+        run: python tradingbot.py --index ${{ github.event.inputs.index }}
 
       - name: Commit and Push CSV
         run: |

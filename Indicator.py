@@ -120,6 +120,7 @@ class Indicator:
 
     def buyorSell(self):
         result = 'WAIT'
+        
         # Logic for deciding buy or sell
         time30 = '30m'
         # data30 = self.signal_datas[time30]
@@ -192,6 +193,9 @@ class Indicator:
             result = 'QUICKSELL'
         elif weakBuy30min and buy5min:
             result = 'QUICKBUY'
+            
+        
+
 
         if goldenBar:
             result = f"{result} {'*** 5MIN-GOLDBAR ***'}"
@@ -242,6 +246,7 @@ class Indicator:
         # goldZoneR = self.checkGoldZone()##
         # result = f"{goldZoneR} {result}"
 
+        result = f"{self.ticker}:{result}"
         last_result = self.rData.iloc[-1]['result'] if len(self.rData) else ''
 
         if result != last_result:
