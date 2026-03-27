@@ -47,13 +47,9 @@ jobs:
           # Stage all CSV files
           git add *.csv
           
-          # Only commit and push if there are actual changes
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update market data CSV: $(date)"
-            git push origin main
-          fi
+          # Force a commit even if no data changed, then push
+          git commit --allow-empty -m "Update market data CSV: $(date)"
+          git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
