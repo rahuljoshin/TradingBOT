@@ -446,7 +446,7 @@ class Indicator:
         elif interval == '15m' or interval == '30m':
             data = dataCls.get_Data(interval=interval, period='5d')
         elif interval == '1d':
-            data = dataCls.get_Data(interval=interval, period='1mo')
+            data = dataCls.get_Data(interval=interval, period='6mo')
 
         data['SAR'] = IndHelper.getSAR(high=data['High'], low=data['Low'],
                                                         close=data['Close'])
