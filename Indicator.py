@@ -189,7 +189,7 @@ class Indicator:
 
 
         if ttmSqeeze:
-            result = '==TTM SQEEZE=='
+            result = 'NO TRADE ZONE, TTM SQZ'
 
         if buy30min and buy5min:
             result = 'BESTBUY'
