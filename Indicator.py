@@ -168,6 +168,8 @@ class Indicator:
         vwapBar = data5.iloc[-2]['VWAPBAR']
         prevwapbar = data5.iloc[-2]['PVWAPBAR']
 
+        ttmSqeeze = data5.iloc[-2]['TTMSQ']
+
         pLowBar = data5.iloc[-2]['PRELOW']
         pHighBar = data5.iloc[-2]['PREHIGH']
 
@@ -194,8 +196,8 @@ class Indicator:
         elif weakBuy30min and buy5min:
             result = 'QUICKBUY'
             
-        
-
+        if ttmSqeeze:
+            result = f"{result} {'==TTM SQEEZE=='}"
 
         if goldenBar:
             result = f"{result} {'*** 5MIN-GOLDBAR ***'}"
@@ -476,10 +478,9 @@ class Indicator:
 
         data['kUpperBand'], data['kMiddleLine'], data['kLowerBand'] = (
             IndHelper.calculateKeltnerChannel(data['High'],
-                                              data['Low'], data['Close'], period=20, multiplier=2))
+                                              data['Low'], data['Close'], period=20, multiplier=1.5))
 
-        data['TTMSQ'] = (data['BBUpperBand2'] < data['kUpperBand']) & (
-                data['BBLowerBand2'] > data['kLowerBand'])
+        data['TTMSQ'] = ((data['BBUpperBand2'] < data['kUpperBand']) | (data['BBLowerBand2'] > data['kLowerBand']))
 
         data['diff'] = data['Close'] - ((data['kMiddleLine'] + data['SMA20']) / 2)
 
