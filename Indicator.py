@@ -199,8 +199,9 @@ class Indicator:
             result = 'QUICKSELL'
         elif weakBuy30min and buy5min:
             result = 'QUICKBUY'
-            
 
+        if ttmSqeeze:
+            result = f"{result} {'-NO TRADE ZONE, TTM SQZ-'}"
 
         if goldenBar:
             result = f"{result} {'*** 5MIN-GOLDBAR ***'}"
