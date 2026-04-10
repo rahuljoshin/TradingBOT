@@ -1,5 +1,3 @@
-
-
 from Banknifty import BankniftyCls
 
 from DataCollector import DataCollectorCls
@@ -8,9 +6,6 @@ from TelgramCom import TemBot
 
 from datetime import datetime
 from datetime import timedelta
-
-
-
 
 import heapq
 from collections import namedtuple
@@ -80,11 +75,11 @@ class Indicator:
         self.ticker = 'NIFTY'
         # tradeTrigger = TradeTrigger()
 
-    def execute(self, ticker = 'NIFTY'):
+    def execute(self, ticker='NIFTY'):
         self.ticker = ticker
         self.calculatePivotLevels()
         self.todayOHLC()
-        #self.todayBroadPlan()
+        # self.todayBroadPlan()
         if self.allSignals():
             self.buyorSell()
 
@@ -120,7 +115,7 @@ class Indicator:
 
     def buyorSell(self):
         result = 'WAIT'
-        
+
         # Logic for deciding buy or sell
         time30 = '30m'
         # data30 = self.signal_datas[time30]
@@ -260,8 +255,8 @@ class Indicator:
             # Concatenate the new DataFrame with the original DataFrame
             self.rData = pd.concat([self.rData, new_df], ignore_index=True)
 
-            #message = (f"Result {len(self.rData)} is: {self.rData.iloc[-1]['result']}"
-                  # f"from {self.rData.iloc[-1]['time']}")
+            # message = (f"Result {len(self.rData)} is: {self.rData.iloc[-1]['result']}"
+            # f"from {self.rData.iloc[-1]['time']}")
 
             message = (f"{self.rData.iloc[-1]['result']} from {self.rData.iloc[-1]['time']}")
             bot = TemBot()
@@ -307,12 +302,12 @@ class Indicator:
     def getTopPriceVolumesforDay(self, num_levels=10):
         time5 = '5m'
 
-        #bank = BankniftyCls()
+        # bank = BankniftyCls()
         dataCls = DataCollectorCls(market_type=self.ticker)
 
-        #data5 = dataCls.get_BNData(interval=time5, period='1d')
+        # data5 = dataCls.get_BNData(interval=time5, period='1d')
 
-        #iClass = DataCollectorCls(market_type="SENSEX")
+        # iClass = DataCollectorCls(market_type="SENSEX")
         data5 = dataCls.get_Data(interval=time5, period='1d')
 
         price_data, volume_data = self.fixed_range_volume_profile(prices=data5['Close'], volumes=data5['Volume'],
@@ -331,7 +326,7 @@ class Indicator:
         return self.top_vol_records
 
     def todayOHLC(self):
-        #bank = BankniftyCls()
+        # bank = BankniftyCls()
         dataCls = DataCollectorCls(market_type=self.ticker)
         data = dataCls.get_Candle(period='1d', interval='1d', latest=True)
         self.tOpen = data.loc[1]['Open']
@@ -342,22 +337,21 @@ class Indicator:
         logger.info(f"\n Todays# Open:{self.tOpen} High:{self.tHigh} Low:{self.tLow} Close:{self.tClose}")
 
     def todayBroadPlan(self):
-       #open in R1 and Pivot
+        # open in R1 and Pivot
         if (self.r1 > self.tOpen > self.pivot) | (self.phigh > self.tOpen > self.pivot):
-           logger.info(f"\n Todays# Open:{self.tOpen} between R1/PHigh and Pivot")
+            logger.info(f"\n Todays# Open:{self.tOpen} between R1/PHigh and Pivot")
 
         if (self.pivot > self.tOpen > self.s1) | (self.pivot > self.tOpen > self.plow):
             logger.info(f"\n Todays# Open:{self.tOpen} between Pivot and S1/pLow")
 
-
-
         logger.info(f"\n Todays# Open:{self.tOpen} High:{self.tHigh} Low:{self.tLow} Close:{self.tClose}")
+
     def calculatePivotLevels(self):
 
         if self.TCPR < 1:
             logger.info("Calculating pivot level")
             dataCls = DataCollectorCls(market_type=self.ticker)
-            #bank = BankniftyCls()
+            # bank = BankniftyCls()
             data = dataCls.get_Candle(period='5d', interval='1d', latest=False)
             self.phigh = data.loc[1]['High']
             self.plow = data.loc[1]['Low']
@@ -440,7 +434,7 @@ class Indicator:
 
     def getSignals(self, interval='5m'):
 
-        #bank = BankniftyCls()
+        # bank = BankniftyCls()
         dataCls = DataCollectorCls(market_type=self.ticker)
 
         data = pd.DataFrame()
@@ -453,16 +447,16 @@ class Indicator:
             data = dataCls.get_Data(interval=interval, period='6mo')
 
         data['SAR'] = IndHelper.getSAR(high=data['High'], low=data['Low'],
-                                                        close=data['Close'])
+                                       close=data['Close'])
 
         data['RSI9'] = IndHelper.getRSI(close=data['Close'], window=9)
         data['EMA3_RSI'] = IndHelper.getEMA(data['RSI9'], window=3)
 
         # Calculate VWMA with a period of 21 on RSI
-        #data['VWMA21_RSI'] = Indicator.vwma(data['RSI9'], data['Volume'], period=21)
+        # data['VWMA21_RSI'] = Indicator.vwma(data['RSI9'], data['Volume'], period=21)
 
         data['%K'], data['%D'] = IndHelper.getStoch(high=data['High'], low=data['Low'],
-                                                        close=data['Close'], window=4, smooth_window=1)
+                                                    close=data['Close'], window=4, smooth_window=1)
 
         # SMA5,20,50 and EMA 18,50
         data['SMA5'] = data['Close'].rolling(window=5).mean()
@@ -471,7 +465,7 @@ class Indicator:
         data['SMA50'] = data['Close'].rolling(window=50).mean()
         data['EMA50'] = data['Close'].ewm(span=50).mean()
 
-        #data['SMA50'].fillna(data['EMA50'], inplace=True)
+        # data['SMA50'].fillna(data['EMA50'], inplace=True)
         data['SMA50'] = data['SMA50'].fillna(data['EMA50'])
 
         # Bollinger band 20,2
@@ -492,9 +486,7 @@ class Indicator:
             data['Low'])
 
         data['IRBLONG'], data['IRBSHORT'] = IndHelper.findIRB(data['Open'], data['High'], data['Low'],
-                                                                  data['Close'])
-
-
+                                                              data['Close'])
 
         Indicator.findGoldVWAPBuySell(data)
 
@@ -512,16 +504,15 @@ class Indicator:
                    (data['Close'] > data['SMA50']), 'BUYORSELL'] = 'BUY'
         '''
 
-        data.loc[(data['Close'] > data['SMA5']) & (data['SMA5'] > data['EMA18']) & (
-                data['Close'] > data['SMA20']) & (data['EMA18'] > data['SMA50']) & (
-                           data['SMA5'] > data['SMA50']) & (data['SMA5'] > data['SMA20']) &
-                   (data['Close'] > data['SMA50']), 'BUYORSELL'] = 'BUY'
+        data.loc[(data['Close'] > data['SMA5']) & (data['SMA5'] > data['EMA18'])
+                 & (data['Close'] > data['SMA20']) & (data['EMA18'] > data['SMA50'])
+                 & (data['Close'] > data['SAR']) & (data['SMA5'] > data['SMA50'])
+                 & (data['SMA5'] > data['SMA20']) & (data['Close'] > data['SMA50']), 'BUYORSELL'] = 'BUY'
 
-
-        data.loc[(data['Close'] < data['SMA5']) & (data['SMA5'] < data['EMA18']) & (
-                data['Close'] < data['SMA20']) & (data['EMA18'] < data['SMA50']) & (
-                           data['SMA5'] < data['SMA50']) & (data['SMA5'] < data['SMA20']) &
-                   (data['Close'] < data['SMA50']), 'BUYORSELL'] = 'SELL'
+        data.loc[(data['Close'] < data['SMA5']) & (data['SMA5'] < data['EMA18'])
+                 & (data['Close'] < data['SMA20']) & (data['EMA18'] < data['SMA50'])
+                 & (data['Close'] < data['SAR']) & (data['SMA5'] < data['SMA50'])
+                 & (data['SMA5'] < data['SMA20']) & (data['Close'] < data['SMA50']), 'BUYORSELL'] = 'SELL'
 
         data = data.round(2)
         return data
@@ -647,7 +638,7 @@ class Indicator:
 
         data['GOLDBAR'] = (
 
-                    (((data['Low'] < data['GOLDUP']) &
+                (((data['Low'] < data['GOLDUP']) &
                   (data['GOLDUP'] < data['High'])) & (data['IRBLONG'] | data['IRBSHORT'])) |
                 (((data['Low'] < data['GOLD']) &
                   (data['GOLD'] < data['High'])) & (data['IRBLONG'] | data['IRBSHORT'])) |
@@ -666,15 +657,15 @@ class Indicator:
         )
 
         data['VWAPBAR'] = ((data['Low'] < data['VWAP']) & (data['VWAP'] < data['High']))
-                             #&
-                             #(data['IRBLONG'] | data['IRBSHORT'])
-                             #)
+        # &
+        # (data['IRBLONG'] | data['IRBSHORT'])
+        # )
 
         data['PVWAPBAR'] = ((data['Low'] < ((2 * data['GOLD']) - data['VWAP'])) &
-                              (((2 * data['GOLD']) - data['VWAP']) < data['High'])
-                              #&
-                              #(data['IRBLONG'] | data['IRBSHORT'])
-                              )
+                            (((2 * data['GOLD']) - data['VWAP']) < data['High'])
+                            # &
+                            # (data['IRBLONG'] | data['IRBSHORT'])
+                            )
 
     @staticmethod
     # Function to calculate VWMA
