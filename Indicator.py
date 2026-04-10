@@ -263,8 +263,10 @@ class Indicator:
             # Concatenate the new DataFrame with the original DataFrame
             self.rData = pd.concat([self.rData, new_df], ignore_index=True)
 
-            message = (f"Result {len(self.rData)} is: {self.rData.iloc[-1]['result']}"
-                   f"from {self.rData.iloc[-1]['time']}")
+            #message = (f"Result {len(self.rData)} is: {self.rData.iloc[-1]['result']}"
+                  # f"from {self.rData.iloc[-1]['time']}")
+
+            message = (f"{self.rData.iloc[-1]['result']} from {self.rData.iloc[-1]['time']}")
             bot = TemBot()
             bot.sendMessage(message)
             logger.info(message)
