@@ -187,10 +187,6 @@ class Indicator:
         top2VolBar = data5.iloc[-2]['TOP2VOL']
         top3VolBar = data5.iloc[-2]['TOP3VOL']
 
-
-        if ttmSqeeze:
-            result = 'NO TRADE ZONE, TTM SQZ'
-
         if buy30min and buy5min:
             result = 'BESTBUY'
         elif sell30min and sell5min:
