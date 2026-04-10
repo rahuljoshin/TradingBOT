@@ -187,6 +187,10 @@ class Indicator:
         top2VolBar = data5.iloc[-2]['TOP2VOL']
         top3VolBar = data5.iloc[-2]['TOP3VOL']
 
+
+        if ttmSqeeze:
+            result = '==TTM SQEEZE=='
+
         if buy30min and buy5min:
             result = 'BESTBUY'
         elif sell30min and sell5min:
@@ -196,8 +200,7 @@ class Indicator:
         elif weakBuy30min and buy5min:
             result = 'QUICKBUY'
             
-        if ttmSqeeze:
-            result = f"{result} {'==TTM SQEEZE=='}"
+
 
         if goldenBar:
             result = f"{result} {'*** 5MIN-GOLDBAR ***'}"
