@@ -506,12 +506,12 @@ class Indicator:
 
         data.loc[(data['Close'] > data['SMA5']) & (data['SMA5'] > data['EMA18'])
                  & (data['Close'] > data['SMA20']) & (data['EMA18'] > data['SMA50'])
-                 & (data['Close'] > data['SAR']) & (data['SMA5'] > data['SMA50'])
+                 & (data['SMA5'] > data['SMA50'])
                  & (data['SMA5'] > data['SMA20']) & (data['Close'] > data['SMA50']), 'BUYORSELL'] = 'BUY'
 
         data.loc[(data['Close'] < data['SMA5']) & (data['SMA5'] < data['EMA18'])
                  & (data['Close'] < data['SMA20']) & (data['EMA18'] < data['SMA50'])
-                 & (data['Close'] < data['SAR']) & (data['SMA5'] < data['SMA50'])
+                & (data['SMA5'] < data['SMA50'])
                  & (data['SMA5'] < data['SMA20']) & (data['Close'] < data['SMA50']), 'BUYORSELL'] = 'SELL'
 
         data = data.round(2)
