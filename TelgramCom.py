@@ -8,7 +8,6 @@ class TemBot:
 
     #chat_id = '1502486402'  # Replace with your chat ID
     url = f'https://api.telegram.org/bot{bot_token}/'
-
     def sendMessage(self, message):
         # Telegram bot API URL and your bot token
 
