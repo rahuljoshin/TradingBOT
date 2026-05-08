@@ -4,7 +4,7 @@ from Util import logger
 
 class TemBot:
     bot_token = '8615208224:AAHUj05ui69iSicn3RMKC2-lIvgiaeseRFg' #'6551575876:AAGRufpscyaxlV6JKgO4hkUEp2AO7eXLJDw'
-    chat_id = '1502486402'  # Replace with your chat ID -4569429498
+    channel_id = '-1003720312965'  # Replace with your chat ID -4569429498 8615208224
 
     #chat_id = '1502486402'  # Replace with your chat ID
     url = f'https://api.telegram.org/bot{bot_token}/'
@@ -20,7 +20,7 @@ class TemBot:
         # message = 'This is a test message from your Telegram bot.'
 
         # Send the message to the bot
-        response = requests.post(url, data={'chat_id': self.chat_id, 'text': message})
+        response = requests.post(url, data={'chat_id': self.channel_id, 'text': message})
 
         # message = '<b>This is a bold message in </b><i><a href="https://www.w3schools.com/colors/colors_picker.asp" style="color:red">red</a></i><b> color.</b>'
 
