@@ -472,7 +472,7 @@ class Indicator:
         data['BBUpperBand2'], data['BBLowerBand2'] = IndHelper.calBB(data['Close'], period=20, stddev=2)
         data['BBUpperBand1'], data['BBLowerBand1'] = IndHelper.calBB(data['Close'], period=20, stddev=1)
 
-        data['kUpperBand'], data['kMiddleLine'], data['kLowerBand'] = (
+        data['kLowerBand'], data['kMiddleLine'], data['kUpperBand'] = (
             IndHelper.calculateKeltnerChannel(data['High'],
                                               data['Low'], data['Close'], period=20, multiplier=1.5))
 
@@ -480,10 +480,12 @@ class Indicator:
 
         data['diff'] = data['Close'] - ((data['kMiddleLine'] + data['SMA20']) / 2)
 
-        data['tenkan'], data['kijun'], data['senkouA'], data['senkouB'] = IndHelper.calcSuperIchi(
+        ichi = IndHelper.lux_super_ichi(data)
+
+        '''data['tenkan'], data['kijun'], data['senkouA'], data['senkouB'] = IndHelper.calcSuperIchi(
             data['Close'],
             data['High'],
-            data['Low'])
+            data['Low'])'''
 
         data['IRBLONG'], data['IRBSHORT'] = IndHelper.findIRB(data['Open'], data['High'], data['Low'],
                                                               data['Close'])

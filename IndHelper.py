@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
+import pandas_ta as taL
 import ta as lib
+import ta.trend
 from ta.trend import PSARIndicator
-import ta.volatility
+#import ta.volatility
 
 
 class IndHelper:
@@ -33,20 +35,26 @@ class IndHelper:
     @staticmethod
     def getSAR(high, low, close):
 
-        sarValues = PSARIndicator(high=high.squeeze(), low=low.squeeze(),
-                                  close=close.squeeze()).psar()
+        # sarValues = PSARIndicator(high=high.squeeze(), low=low.squeeze(),
+        # close=close.squeeze()).psar()
+
+        psar = taL.psar(high=high, low=low, close=close)
+
+        sarValues = psar['PSARl_0.02_0.2'].fillna(psar['PSARs_0.02_0.2'])
         return sarValues
 
     @staticmethod
     def getRSI(close, window=9):
 
-        rsiValues = lib.wrapper.RSIIndicator(close=close.squeeze(), window=window,fillna=True).rsi()
+        # rsiValues1 = lib.wrapper.RSIIndicator(close=close.squeeze(), window=window,fillna=True).rsi()
+        rsiValues = taL.rsi(close=close, length=window)
         return rsiValues
 
     @staticmethod
     def getEMA(close, window=9):
 
-        emaValues = lib.wrapper.EMAIndicator(close=close.squeeze(), window=window, fillna=True).ema_indicator()
+        # emaValues = lib.wrapper.EMAIndicator(close=close.squeeze(), window=window, fillna=True).ema_indicator()
+        emaValues = taL.ema(close=close, length=window)
         return emaValues
 
     @staticmethod
@@ -54,16 +62,210 @@ class IndHelper:
         # Calculate True Range (TR)
 
         # Calculate the Exponential Moving Average (EMA)
-        ema = close.ewm(span=period, adjust=False).mean()
+        # ema = close.ewm(span=period, adjust=False).mean()
+
+        # ema = pandaTa.ema(close=close, length=period)
 
         # Calculate the Average True Range (ATR)
-        atr = ta.volatility.AverageTrueRange(high=high, low=low, close=close,
-                                                       window=period).average_true_range()
+        kc = taL.kc(high=high, low=low, close=close, length=period, scalar=multiplier)
+        return kc.iloc[:, 0], kc.iloc[:, 1], kc.iloc[:, 2]
+        # return kc[]
+
+        # atr = ta.volatility.AverageTrueRange(high=high, low=low, close=close,
+        # window=period).average_true_range()
 
         # Calculate the Keltner Channel Bands
-        kUpperBand = ema + (atr * multiplier)
-        kLowerBand = ema - (atr * multiplier)
-        return kUpperBand, ema, kLowerBand
+        # kUpperBand = ema + (atr * multiplier)
+        # kLowerBand = ema - (atr * multiplier)
+
+        # return kUpperBand, ema, kLowerBand
+
+    import pandas as pd
+    import numpy as np
+    @staticmethod
+    def lux_super_ichi(df, tenkan_len=9, tenkan_mult=2.0, kijun_len=26, kijun_mult=4.0,
+                       spanB_len=52, spanB_mult=6.0, offset=26):
+
+        def calculate_avg(src, length, mult):
+            # 1. Calculate ATR
+            tr = pd.concat([
+                (df['High'] - df['Low']),
+                (df['High'] - df['Close'].shift(1)).abs(),
+                (df['Low'] - df['Close'].shift(1)).abs()
+            ], axis=1).max(axis=1)
+            atr = tr.rolling(window=length).mean() * mult
+
+            hl2 = (df['High'] + df['Low']) / 2
+            up = hl2 + atr
+            dn = hl2 - atr
+
+            upper = np.zeros(len(df))
+            lower = np.zeros(len(df))
+            os = np.zeros(len(df))
+            spt = np.zeros(len(df))
+            max_val = np.zeros(len(df))
+            min_val = np.zeros(len(df))
+
+            # Recursive calculation
+            for i in range(1, len(df)):
+                # Use .iloc[i] for current position and .iloc[i-1] for previous position
+                prev_src = src.iloc[i - 1]
+                prev_upper = upper[i - 1]
+                prev_lower = lower[i - 1]
+
+                # Upper/Lower trailing bands
+                upper[i] = min(up.iloc[i], prev_upper) if prev_src < prev_upper else up.iloc[i]
+                lower[i] = max(dn.iloc[i], prev_lower) if prev_src > prev_lower else dn.iloc[i]
+
+                # Trend Direction (os)
+                os[i] = 1 if src.iloc[i] > upper[i] else (0 if src.iloc[i] < lower[i] else os[i - 1])
+
+                # Support/Resistance Point (spt)
+                spt[i] = lower[i] if os[i] == 1 else upper[i]
+
+                # Detect Cross
+                prev_spt = spt[i - 1]
+                curr_src = src.iloc[i]
+                cross = (curr_src > spt[i] and prev_src <= prev_spt) or (curr_src < spt[i] and prev_src >= prev_spt)
+
+                # Max/Min calculation
+                if cross or os[i] == 1:
+                    max_val[i] = max(curr_src, max_val[i - 1]) if not cross else curr_src
+                else:
+                    max_val[i] = spt[i]
+
+                if cross or os[i] == 0:
+                    min_val[i] = min(curr_src, min_val[i - 1]) if not cross else curr_src
+                else:
+                    min_val[i] = spt[i]
+
+            return (max_val + min_val) / 2
+
+        # Calculate Components
+        df['tenkan'] = calculate_avg(df['Close'], tenkan_len, tenkan_mult)
+        df['kijun'] = calculate_avg(df['Close'], kijun_len, kijun_mult)
+
+        # Senkou Span A is the average of Tenkan and Kijun
+        df['senkouA'] = (df['tenkan'] + df['kijun']) / 2
+
+        # Senkou Span B uses the third set of inputs
+        df['senkouB'] = calculate_avg(df['Close'], spanB_len, spanB_mult)
+
+        # Shift Spans forward (Offset)
+        df['senkouA_lead'] = df['senkouA'].shift(offset - 1)
+        df['senkouB_lead'] = df['senkouB'].shift(offset - 1)
+
+        return df
+    @staticmethod
+    def calculate_super_ichi(df, tenkan_len=9, kijun_len=26, senkou_len=52, atr_len=10, factor=3.0):
+        """
+        Calculates Super Ichi components.
+        Note: Standard Ichimoku uses High/Low averages.
+        Super Ichi enhances this by incorporating ATR-based volatility.
+        """
+
+        # 1. Calculate Standard Ichimoku components using pandas_ta
+        ichi = taL.ichimoku(high=df['High'],close=df['Close'], low= df['Low'], tenkan=tenkan_len, kijun=kijun_len, senkou=senkou_len)[0]
+
+        # 2. Calculate ATR for the volatility 'Super' component
+        df['atr'] = taL.atr(df['High'], df['Low'], df['Close'], length=atr_len)
+
+        # 3. Merge Ichimoku lines into our main dataframe
+        df['tenkan'] = ichi[f'ITS_{tenkan_len}']
+        df['kijun'] = ichi[f'IKS_{kijun_len}']
+        df['span_a'] = ichi[f'ISA_{tenkan_len}']
+        df['span_b'] = ichi[f'ISB_{kijun_len}']
+
+        # 4. Apply Volatility Factor to smooth/filter (The "Super" Logic)
+        # We adjust the Kumo Cloud boundaries based on ATR to reduce whipsaws
+        df['super_span_a'] = df['span_a'] + (df['atr'] * factor * 0.1)
+        df['super_span_b'] = df['span_b'] - (df['atr'] * factor * 0.1)
+
+        # 5. Define Trend Logic
+        # Bullish: Price > Span A and Span B
+        # Bearish: Price < Span A and Span B
+        df['trend'] = 0
+        df.loc[(df['Close'] > df['super_span_a']) & (df['Close'] > df['super_span_b']), 'trend'] = 1
+        df.loc[(df['Close'] < df['super_span_a']) & (df['Close'] < df['super_span_b']), 'trend'] = -1
+
+        return df
+
+    # Example Usage with dummy data
+    # df = pd.read_csv('your_nifty_data.csv')
+    # super_ichi_df = calculate_super_ichi(df)
+
+    @staticmethod
+    def newSuperIchi(data, tenkan_len=9, tenkan_mult=2.0, kijun_len=26, kijun_mult=4.0, spanB_len=52,
+                     spanB_mult=6.0, offset=26):
+        # Calculate basic ATR and HL2
+        data['hl2'] = (data['High'] + data['Low']) / 2
+
+        def calculate_custom_avg(src, length, mult):
+            # Calculate ATR using pandas_ta or manual
+            tr = pd.concat([data['High'] - data['Low'],
+                            (data['High'] - src.shift(1)).abs(),
+                            (data['Low'] - src.shift(1)).abs()], axis=1).max(axis=1)
+            atr = tr.rolling(length).mean() * mult
+
+            upper = np.zeros(len(data))
+            lower = np.zeros(len(data))
+            os = np.zeros(len(data))
+            max_val = np.zeros(len(data))
+            min_val = np.zeros(len(data))
+            result = np.zeros(len(data))
+
+            hl2 = data['hl2'].values
+            src_val = src.values
+            atr_val = atr.fillna(0).values
+
+            for i in range(1, len(data)):
+                up = hl2[i] + atr_val[i]
+                dn = hl2[i] - atr_val[i]
+
+                # Trailing Upper and Lower Bands
+                upper[i] = min(up, upper[i - 1]) if src_val[i - 1] < upper[i - 1] else up
+                lower[i] = max(dn, lower[i - 1]) if src_val[i - 1] > lower[i - 1] else dn
+
+                # Trend Direction (os)
+                if src_val[i] > upper[i]:
+                    os[i] = 1
+                elif src_val[i] < lower[i]:
+                    os[i] = 0
+                else:
+                    os[i] = os[i - 1]
+
+                spt = lower[i] if os[i] == 1 else upper[i]
+
+                # Check for crossing (Source crossing the Support/Resistance Line)
+                crossed = (src_val[i] > spt and src_val[i - 1] <= spt) or (
+                        src_val[i] < spt and src_val[i - 1] >= spt)
+
+                # Max/Min Logic
+                if crossed:
+                    max_val[i] = max(src_val[i], max_val[i - 1])
+                    min_val[i] = min(src_val[i], min_val[i - 1])
+                elif os[i] == 1:
+                    max_val[i] = max(src_val[i], max_val[i - 1])
+                    min_val[i] = min_val[i - 1]  # Carry forward
+                else:
+                    max_val[i] = spt
+                    min_val[i] = min(src_val[i], min_val[i - 1])
+
+                result[i] = (max_val[i] + min_val[i]) / 2
+
+            return result
+
+        # Calculate Tenkan and Kijun
+        data['tenkan'] = calculate_custom_avg(data['Close'], tenkan_len, tenkan_mult)
+        data['kijun'] = calculate_custom_avg(data['Close'], kijun_len, kijun_mult)
+
+        # Senkou Span A (shifted forward)
+        data['senkouA'] = ((data['tenkan'] + data['kijun']) / 2).shift(offset - 1)
+
+        # Senkou Span B (shifted forward)
+        data['senkouB'] = pd.Series(calculate_custom_avg(data['Close'], spanB_len, spanB_mult)).shift(offset - 1)
+
+        return data
 
     @staticmethod
     def calcSuperIchi(close, high, low):
