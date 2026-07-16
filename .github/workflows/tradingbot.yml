@@ -39,17 +39,7 @@ jobs:
       - name: Execute Python script
         run: python tradingbot.py --index ${{ github.event.inputs.index }}
 
-      - name: Commit and Push CSV
-        run: |
-          git config --global user.name "github-actions[tradingbot]"
-          git config --global user.email "github-actions[tradingbot]@users.noreply.github.com"
-          
-          # Stage all CSV files
-          git add *.csv
-          
-          # Force a commit even if no data changed, then push
-          git commit --allow-empty -m "Update market data CSV: $(date)"
-          git push origin main
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
