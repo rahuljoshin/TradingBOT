@@ -5,10 +5,10 @@
 
 
 
-from Technical import NSE
+#from Technical import NSE
 import pandas as pd
 
-from nsepy.technicals import pivot_point
+#from nsepy.technicals import pivot_point
 
 
 #nse = NSE()
@@ -17,8 +17,13 @@ from nsepy.technicals import pivot_point
 #print(data)
 
 
-from Derivatives import NSE
 
+from TelgramCom import TemBot
+
+tmp = TemBot()
+tmp.sendMessage("test")
+
+'''from Derivatives import NSE
 derNse = NSE()
 
 bank_nifty_option_chain = derNse.get_option_chain(
@@ -55,7 +60,7 @@ print(call_ohlc.head())
 print(put_ohlc.head())
 #data = derNse.get_index_futures_data(index_or_ticker="SBIN")
 #print(data)
-'''
+'' '
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.

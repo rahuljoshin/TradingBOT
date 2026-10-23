@@ -3,7 +3,7 @@ from Util import logger
 
 
 class TemBot:
-    bot_token = '8615208224:AAHUj05ui69iSicn3RMKC2-lIvgiaeseRFg' #'6551575876:AAGRufpscyaxlV6JKgO4hkUEp2AO7eXLJDw'
+    bot_token = '8907196957:AAGDX9rGle-UU6vSeZi8WfJewu51dz4Nz2A' #'6551575876:AAGRufpscyaxlV6JKgO4hkUEp2AO7eXLJDw'
     channel_id = '-1003720312965'  # Replace with your chat ID -4569429498 8615208224
 
     #chat_id = '1502486402'  # Replace with your chat ID
